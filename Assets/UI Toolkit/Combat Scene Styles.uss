@@ -1,0 +1,51 @@
+VisualElement {
+}
+
+.PlayerPartyPanel {
+    flex-direction: row;
+    justify-content: center;
+    position: absolute;
+    bottom: 20%;
+    left: 0;
+    right: 0;
+}
+
+.CardSlot {
+    width: 140px;
+    height: 210px;
+
+    /* ----- 프로토타입용: 눈에 보이게 하기 ----- */
+    background-color: rgba(50, 50, 50, 0.7);
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: #222;
+}
+
+.CardSlot:first-child {
+    border-left-width: 1px;
+}
+
+.MonsterPartyPanel {
+    flex-direction: row;
+    justify-content: center;
+    position: absolute;
+    top: 15%;
+    left: 0;
+    right: 0;
+}
+
+/* (디폴트) 3칸짜리 중앙 보스 슬롯 */
+.card-1-slot {
+    width: 140px;
+}
+
+/* (보스전용) 3칸짜리 중앙 보스 슬롯 */
+.boss-slot-center {
+    width: 420px; /* 140px * 3 */
+}
+
+/* (보스전용) 보스에게 덮어씌워져 숨겨질 슬롯 */
+.boss-slot-hidden {
+    display: none;
+}
