@@ -1,6 +1,8 @@
 
 /// 모든 카드(용병, 몬스터, 장비, 건축물 등등)의 공통 설계 추상 클래스
 /// 이 클래스를 상속받아 실제 카드 제작하면 됨
+using UnityEngine;
+using System.Collections.Generic;
 
 public abstract class Card
 {
@@ -19,16 +21,27 @@ public abstract class Card
     /// 이 카드를 소유하고 관리하는 '주인' (플레이어 또는 몬스터)
     protected PlayerController m_Owner;
 
+    /// 카드가 몇 번 슬롯에 있는지
+    public int SlotIndex { get; private set; }
+
+    // --- 상태 이상 관련 ---
+    public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>();
+    private bool m_IsFrozen = false;
+    private float m_FreezeTimer = 0f;
+
+    // (나중에 m_BleedStacks, m_PoisonStacks 등도 여기에 추가)
 
     // --- 2. 생성자 (카드가 처음 만들어질 때) ---
 
     /// 새 카드를 생성할 때 호출됩니다.
-    /// <param name="owner">이 카드를 소유할 컨트롤러(PlayerController 또는 MonsterController)</param>
-    /// <param name="cooldown">이 카드의 기본 쿨타임</param>
-    /// 
-    public Card(PlayerController owner, float cooldown)
+    /// <param name="owner">이 카드를 소유할 컨트롤러 (PlayerController 또는 MonsterController)</param>
+    /// <param name="cooldown">이 카드의 기본 쿨타임 </param>
+    /// <param name="index">이 카드의 위치 </param>
+
+    public Card(PlayerController owner, int index, float cooldown)
     {
         this.m_Owner = owner;
+        this.SlotIndex = index;
         this.CooldownTime = cooldown;
         this.CurrentCooldown = cooldown; // 전투 시작 시 쿨타임이 가득 찬 상태로 시작
         this.CardName = "Default Card Name"; 
@@ -43,16 +56,59 @@ public abstract class Card
 
     public abstract void ExecuteSkill();
 
+
+
     /// [공통 함수]
-    /// BattleManager가 매 프레임 호출하여 쿨타임을 줄여주는 함수입니다.
+    /// BattleManager가 매 프레임 호출하여 쿨타임을 줄여주는 함수
     /// virtual: 자식 클래스에서 이 함수를 수정(override)할 수도 있습니다.
     /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
  
     public virtual void UpdateCooldown(float deltaTime)
     {
+        // '빙결' 상태라면, 쿨타임을 줄이지 않고 빙결 시간만 줄입니다.
+        if (m_IsFrozen)
+        {
+            m_FreezeTimer -= deltaTime;
+            if (m_FreezeTimer <= 0)
+            {
+                m_IsFrozen = false;
+                Debug.Log($"[{this.CardName}] (이)가 빙결에서 풀려났습니다!");
+            }
+            return; // [핵심!] 쿨타임 감소 로직을 실행하지 않고 건너뜀!
+        }
+
         if (CurrentCooldown > 0)
         {
             CurrentCooldown -= deltaTime;
         }
+    }
+
+    /// 외부에서 이 카드에게 상태 이상을 적용하는 함수
+    /// <returns>면역이면 false, 적용되면 true를 반환합니다.</returns>
+    public virtual bool ApplyStatusEffect(StatusEffectType effectType, float duration)
+    {
+        // 1. 면역인지 체크
+        if (Immunities.Contains(effectType))
+        {
+            Debug.Log($"[{this.CardName}] (은)는 '{effectType}' 효과에 면역입니다!");
+            return false; // 적용 실패!
+        }
+
+        // 2. 면역이 아니면, 실제 효과 적용
+        switch (effectType)
+        {
+            case StatusEffectType.Freeze:
+                m_IsFrozen = true;
+                m_FreezeTimer = duration;
+                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 빙결되었습니다!");
+                break;
+
+                // (나중에 출혈, 중독 로직 추가...)
+                // case StatusEffectType.Bleed:
+                //    m_BleedStacks += (int)duration; // duration을 중첩 횟수로 사용
+                //    break;
+        }
+
+        return true; 
     }
 }

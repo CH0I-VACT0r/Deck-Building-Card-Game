@@ -70,7 +70,7 @@ public class PlayerController
     // --- 6. 핵심 함수 ---
     /// BattleManager가 호출해주는, 이 컨트롤러의 매 프레임 업데이트 함수
     /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
-    /// 
+
     public virtual void BattleUpdate(float deltaTime)
     {
         // 1. (공통) 내 카드들의 쿨타임 회전 및 스킬을 발동
@@ -93,7 +93,7 @@ public class PlayerController
 
     /// (공통) 몬스터가 나를 공격할 때 호출하는 함수
     /// <param name="amount">받는 피해량</param>
-    /// 
+  
     public virtual void TakeDamage(float amount)
     {
         // (나중에 보호막(Shield) 변수가 있다면, 여기서 먼저 피해를 흡수하는 로직 추가)
@@ -131,5 +131,84 @@ public class PlayerController
     public void SetTarget(MonsterController target)
     {
         this.m_Target = target;
+    }
+
+    // --- 7. 위치 호출 함수 ---
+    /// 내 덱(m_Cards)의 특정 인덱스에 있는 카드 반환
+    /// (범위를 벗어나면 null을 반환)
+    
+    public Card GetCardAtIndex(int index)
+    {
+        if (index >= 0 && index < 7 && m_Cards[index] != null)
+        {
+            return m_Cards[index];
+        }
+        return null;
+    }
+
+    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환
+    public Card GetLeftNeighbor(int myIndex)
+    {
+        return GetCardAtIndex(myIndex - 1);
+    }
+
+    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환
+    public Card GetRightNeighbor(int myIndex)
+    {
+        return GetCardAtIndex(myIndex + 1);
+    }
+
+    /// [상대 위치] "나의 맞은편"에 있는 몬스터 카드 반환
+    public Card GetOppositeCard(int myIndex)
+    {
+        if (m_Target != null)
+        {
+            return m_Target.GetCardAtIndex(myIndex);
+        }
+        return null;
+    }
+
+    // --- 8. 상태 이상 헬퍼 함수 ---
+    /// [핵심] 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용
+    public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
+    {
+        // 1. 0~6번 슬롯 인덱스가 담긴 리스트 생성
+        List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
+
+        // 2. 리스트를 무작위로 섞습니다 
+        for (int i = 0; i < slotIndices.Count; i++)
+        {
+            int temp = slotIndices[i];
+            int randomIndex = Random.Range(i, slotIndices.Count);
+            slotIndices[i] = slotIndices[randomIndex];
+            slotIndices[randomIndex] = temp;
+        }
+
+        // 3. 적용에 성공한 횟수를 카운팅
+        int successCount = 0;
+
+        // 4. 무작위로 섞인 슬롯 순서대로 확인
+        foreach (int index in slotIndices)
+        {
+            Card card = GetCardAtIndex(index); // 
+
+            // 5. 슬롯이 비어있지 않은지 확인
+            if (card != null)
+            {
+                // 6. 카드에게 효과 적용을 시도
+                // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 합니다!)
+                if (card.ApplyStatusEffect(effectType, duration))
+                {
+                    // 7. 적용에 성공했으면, 카운트를 1 올립니다.
+                    successCount++;
+                }
+            }
+
+            // 8. 목표한 횟수(count)만큼 성공했으면, 즉시 종료합니다.
+            if (successCount >= count)
+            {
+                break;
+            }
+        }
     }
 }

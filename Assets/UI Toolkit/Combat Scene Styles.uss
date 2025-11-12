@@ -5,14 +5,16 @@ VisualElement {
     flex-direction: row;
     justify-content: center;
     position: absolute;
-    bottom: 20%;
-    left: 0;
-    right: 0;
+    bottom: 22.5%;
+    align-self: center;
 }
 
 .CardSlot {
     width: 140px;
     height: 210px;
+
+    flex-grow: 0;
+    flex-shrink: 0;
 
     /* ----- 프로토타입용: 눈에 보이게 하기 ----- */
     background-color: rgba(50, 50, 50, 0.7);
@@ -22,17 +24,12 @@ VisualElement {
     border-color: #222;
 }
 
-.CardSlot:first-child {
-    border-left-width: 1px;
-}
-
 .MonsterPartyPanel {
     flex-direction: row;
     justify-content: center;
     position: absolute;
-    top: 15%;
-    left: 0;
-    right: 0;
+    top: 22.5%;
+    align-self: center;
 }
 
 /* (디폴트) 3칸짜리 중앙 보스 슬롯 */

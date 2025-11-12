@@ -1,4 +1,3 @@
-// 파일명: MonsterController.cs
 using UnityEngine;
 using UnityEngine.UIElements; // UI Toolkit 사용
 using System.Collections.Generic; // List 사용
@@ -123,5 +122,83 @@ public class MonsterController
     public void SetTarget(PlayerController target)
     {
         this.m_Target = target;
+    }
+
+    // --- 7. 위치 기반 헬퍼 함수 (신규 추가!) ---
+    /// [헬퍼] 내 덱(m_Cards)의 특정 인덱스에 있는 카드를 반환
+    public Card GetCardAtIndex(int index)
+    {
+        if (index >= 0 && index < 7 && m_Cards[index] != null)
+        {
+            return m_Cards[index];
+        }
+        return null;
+    }
+
+    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환합니다.
+    public Card GetLeftNeighbor(int myIndex)
+    {
+        return GetCardAtIndex(myIndex - 1);
+    }
+
+    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환합니다.
+    public Card GetRightNeighbor(int myIndex)
+    {
+        return GetCardAtIndex(myIndex + 1);
+    }
+
+    /// [상대 위치] "나의 맞은편"에 있는 플레이어 카드를 반환합니다.
+    public Card GetOppositeCard(int myIndex)
+    {
+        if (m_Target != null)
+        {
+            return m_Target.GetCardAtIndex(myIndex);
+        }
+        return null;
+    }
+
+    // --- 8. 상태 이상 헬퍼 함수 (신규 추가!) ---
+    /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용합니다.
+    /// (플레이어의 '빙결' 스킬 등이 이 함수를 호출합니다.)
+    public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
+    {
+        // 1. 0~6번 슬롯 인덱스가 담긴 리스트를 만듭니다.
+        List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
+
+        // 2. 리스트를 무작위로 섞습니다 (Fisher-Yates Shuffle).
+        for (int i = 0; i < slotIndices.Count; i++)
+        {
+            int temp = slotIndices[i];
+            int randomIndex = Random.Range(i, slotIndices.Count);
+            slotIndices[i] = slotIndices[randomIndex];
+            slotIndices[randomIndex] = temp;
+        }
+
+        // 3. 적용에 성공한 횟수를 셉니다.
+        int successCount = 0;
+
+        // 4. 무작위로 섞인 슬롯 순서대로 확인합니다.
+        foreach (int index in slotIndices)
+        {
+            Card card = GetCardAtIndex(index); // (방금 위에 추가한 헬퍼 함수)
+
+            // 5. 슬롯이 비어있지 않은지 확인
+            if (card != null)
+            {
+                // 6. [핵심!] 카드에게 효과 적용을 '시도'합니다.
+                // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 합니다!)
+                if (card.ApplyStatusEffect(effectType, duration))
+                {
+                    // 7. 적용에 성공했으면, 카운트를 1 올립니다.
+                    successCount++;
+                }
+            }
+
+            // 8. 목표한 횟수(count)만큼 성공했으면, 즉시 종료합니다.
+            if (successCount >= count)
+            {
+                break;
+            }
+        }
     }
 }
