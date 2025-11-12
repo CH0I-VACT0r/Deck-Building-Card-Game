@@ -17,7 +17,7 @@ public class Lord_SevereCold_Controller : PlayerController
 
 
     // --- 2. 생성자 ---
-    /// '혹한의 성주' 컨트롤러가 생성될 때 호출됩니다.
+    /// '혹한의 성주' 컨트롤러가 생성될 때 호출
     /// <param name="manager">나를 관리할 BattleManager</param>
     /// <param name="panel">내가 제어할 UXML의 'PlayerParty' 패널</param>
     /// <param name="maxHP">이 영주의 최대 체력</param>
@@ -63,11 +63,15 @@ public class Lord_SevereCold_Controller : PlayerController
 
         // 2번 슬롯(m_Cards[1])에 카드1 생성
         // (Card1_"Name".cs가 'PlayerController'를 받도록 수정해야 합니다.)
-        /// 예시) m_Cards[1] = new Card1_"Name"(this);
+        //  예시)
+        /// m_Cards[1] = new Card1_"Name"(this);
+        /// m_Cards[1].Tags.Add("#북방 야만전사");
+        /// m_Cards[1].Tags.Add("#어태커");
 
         // 3번 슬롯(m_Cards[2])에 카드2 생성
         // (Card_Shieldbearer.cs가 'PlayerController'를 받도록 수정해야 합니다.)
-        /// 예시) m_Cards[2] = new Card2_"Name"(this);
+        /// m_Cards[2] = new Card2_"Name"(this);
+        /// m_Cards[2].Tags.Add("#탱커");
 
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 혹한의 성주 전용 덱 설정 완료.");
 

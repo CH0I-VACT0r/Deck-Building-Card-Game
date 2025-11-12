@@ -24,14 +24,22 @@ public abstract class Card
     /// 카드가 몇 번 슬롯에 있는지
     public int SlotIndex { get; private set; }
 
-    // --- 상태 이상 관련 ---
+    // -------------------
+    // --- [상태 이상] ---
+    // -------------------
     public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>();
     private bool m_IsFrozen = false;
     private float m_FreezeTimer = 0f;
 
     // (나중에 m_BleedStacks, m_PoisonStacks 등도 여기에 추가)
 
-    // --- 2. 생성자 (카드가 처음 만들어질 때) ---
+
+
+    // --- [태그] ---
+    public List<string> Tags { get; protected set; } = new List<string>();
+
+
+    // --- 2. 생성자 (카드 처음 생성 시) ---
 
     /// 새 카드를 생성할 때 호출됩니다.
     /// <param name="owner">이 카드를 소유할 컨트롤러 (PlayerController 또는 MonsterController)</param>
@@ -47,6 +55,11 @@ public abstract class Card
         this.CardName = "Default Card Name"; 
     }
 
+    /// 카드가 특정 Tag를 가지고 있는지 확인
+    public bool HasTag(string tag)
+    {
+        return Tags.Contains(tag);
+    }
 
     // --- 3. 핵심 함수 ---
 
