@@ -11,27 +11,27 @@ public class MonsterController
     // --- 1. 참조 변수 ---
     /// 전투 규칙 관리
     protected BattleManager m_BattleManager;
-
-    /// 내가 공격해야 할 '타겟' (플레이어 컨트롤러)
+    /// 내가 공격해야 할 타겟 (플레이어)
     protected PlayerController m_Target;
 
     // --- 2. UI 요소 ---
-
-    /// 이 컨트롤러가 관리하는 UXML의 최상위 패널 (UI Toolkit: "MonsterParty")
-    protected VisualElement m_MonsterParty;
-
-    /// UXML에서 찾아온 7개의 몬스터 슬롯 UI 요소 리스트
+    protected VisualElement m_MonsterParty; // UXML의 MonsterParty 패널
+    protected VisualElement m_StatusPanel; // 몬스터 상태 패널 UI
     public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7);
 
-    // --- 3. 핵심 상태 (공통) ---
-    /// 몬스터(지휘관)의 현재 체력
-    public float CurrentHP { get; protected set; }
+    // 체력 및 쉴드 UI 요소
+    private VisualElement m_HealthBarFill;
+    private VisualElement m_ShieldBarFill;
+    private Label m_HealthLabel;
+    private Label m_ShieldLabel;
+    private Label m_NameLabel; // (몬스터 이름 라벨)
 
-    /// 몬스터(지휘관)의 최대 체력
-    public float MaxHP { get; protected set; }
+    // --- 3. 핵심 상태 (공통) ---
+    public float CurrentHP { get; protected set; } // 몬스터 현재 체력
+    public float MaxHP { get; protected set; } // 몬스터 전체 체력
+    public float CurrentShield { get; protected set; } // 몬스터 쉴드
 
     // --- 4. 카드 덱 관리 ---
-
     /// 이 몬스터가 현재 전투에서 사용하는 7칸의 카드 배열
     protected Card[] m_Cards = new Card[7];
 
@@ -39,23 +39,48 @@ public class MonsterController
     // --- 5. 생성자 ---
     /// MonsterController가 처음 생성될 때 호출됩니다.
     /// <param name="manager">나를 관리할 BattleManager</param>
-    /// <param name="panel">내가 제어할 UXML의 'MonsterParty' 패널</param>
+    /// <param name="VisualElement">내가 제어할 UXML의 'MonsterParty' 패널</param>
     /// <param name="maxHP">이 몬스터의 최대 체력</param>
     /// 
-    public MonsterController(BattleManager manager, VisualElement panel, float maxHP)
+    public MonsterController(BattleManager manager, VisualElement VisualElement, float maxHP)
     {
         this.m_BattleManager = manager;
-        this.m_MonsterParty = panel;
         this.MaxHP = maxHP;
         this.CurrentHP = maxHP;
+        this.CurrentShield = 0;
 
-        // UXML 슬롯(MonSlot1 ~ MonSlot7)을 이름으로 찾아 리스트에 추가합니다.
+        // 1) UXML 패널 이름
+        this.m_MonsterParty = VisualElement.Q<VisualElement>("MonsterParty");
+        this.m_StatusPanel = VisualElement.Q<VisualElement>("MonsterStatus"); // UXML Name 확인!
+
+        // 2) 카드 슬롯(MonSlot1 ~ MonSlot7)을 찾아 리스트에 추가합니다.
         Slots.Clear();
         for (int i = 0; i < 7; i++)
         {
-            // UXML에 정의된 이름 (예: "MonSlot1")
             string slotName = "MonSlot" + (i + 1);
             Slots.Add(m_MonsterParty.Q<VisualElement>(slotName));
+        }
+
+        // 3. [신규!] 상태 UI 요소들을 찾아서 변수에 연결합니다.
+        if (m_StatusPanel != null)
+        {
+            // (UXML에 정의된 'Name'과 일치해야 합니다)
+            m_HealthBarFill = m_StatusPanel.Q<VisualElement>("Monster-HP-fill");
+            m_HealthLabel = m_StatusPanel.Q<Label>("Monster-HP-label");
+            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Monster-ShieldBar-fill");
+            m_ShieldLabel = m_StatusPanel.Q<Label>("Monster-ShieldBar-label");
+            m_NameLabel = m_StatusPanel.Q<Label>("MonsterName-label");
+        }
+        else
+        {
+            Debug.LogError("[MonsterController] 'MonsterStatusPanel'을 UXML에서 찾을 수 없습니다!");
+        }
+
+        // 4. [신규!] UI를 현재 상태로 즉시 업데이트합니다.
+        UpdateHealthUI();
+        if (m_NameLabel != null)
+        {
+            m_NameLabel.text = "Tutorial (Lv.1)"; // (임시 이름)
         }
     }
 
@@ -81,33 +106,49 @@ public class MonsterController
         }
     }
 
-    /// (공통) 플레이어가 나를 공격할 때 호출하는 함수입니다.
+    /// (공통) 플레이어가 나를 공격할 때 호출하는 함수
     /// <param name="amount">받는 피해량</param>
-   
+
     public virtual void TakeDamage(float amount)
     {
-        CurrentHP -= amount;
-        Debug.LogWarning($"[몬스터] {amount} 피해 받음! 남은 체력: {CurrentHP}");
+        float damageRemaining = amount;
 
-        // 체력이 0 이하가 되면 플레이어의 승리를 알림
+        if (CurrentShield > 0)
+        {
+            if (damageRemaining >= CurrentShield)
+            {
+                damageRemaining -= CurrentShield;
+                CurrentShield = 0;
+            }
+            else
+            {
+                CurrentShield -= damageRemaining;
+                damageRemaining = 0;
+            }
+        }
+
+        if (damageRemaining > 0)
+        {
+            CurrentHP -= damageRemaining;
+        }
+
+        Debug.LogWarning($"[몬스터] {amount} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
+
         if (CurrentHP <= 0)
         {
+            CurrentHP = 0;
             m_BattleManager.EndBattle("Player"); // 승리!
         }
+
+        UpdateHealthUI();
     }
 
-    /// (공통) 프로토타입용 덱 설정 함수입니다.
-    /// <param name="cardNames">덱에 넣을 카드 이름 목록 (예: "Monster")</param>
-    
-    public virtual void SetupDeck(string[] cardNames)
+    // 몬스터 쉴드 생성 함수
+    public virtual void AddShield(float amount)
     {
-        // (프로토타입용 하드코딩)
-        // 'this'는 "MonsterController 자신"을 의미합니다.
-        // Card.cs를 상속받은 Card_Monster.cs가 있다고 가정합니다.
-
-        // m_Cards[1] = new Card_Monster(this); // 2번 슬롯에 몬스터 생성
-
-        // (쿨타임 초기화 로직...)
+        CurrentShield += amount;
+        Debug.LogWarning($"[몬스터] 쉴드 {amount} 획득! (총 쉴드: {CurrentShield})");
+        UpdateHealthUI();
     }
 
     /// (공통) 나의 '타겟'(플레이어)이 누구인지 알려주는 함수.
@@ -124,7 +165,7 @@ public class MonsterController
         this.m_Target = target;
     }
 
-    // --- 7. 위치 기반 헬퍼 함수 (신규 추가!) ---
+    // --- 7. 위치 기반 헬퍼 함수  ---
     /// [헬퍼] 내 덱(m_Cards)의 특정 인덱스에 있는 카드를 반환
     public Card GetCardAtIndex(int index)
     {
@@ -135,13 +176,13 @@ public class MonsterController
         return null;
     }
 
-    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환합니다.
+    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환
     public Card GetLeftNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex - 1);
     }
 
-    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환합니다.
+    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환
     public Card GetRightNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex + 1);
@@ -157,15 +198,15 @@ public class MonsterController
         return null;
     }
 
-    // --- 8. 상태 이상 헬퍼 함수 (신규 추가!) ---
+    // --- 8. 상태 이상 헬퍼 함수 ---
     /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용합니다.
     /// (플레이어의 '빙결' 스킬 등이 이 함수를 호출합니다.)
     public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
     {
-        // 1. 0~6번 슬롯 인덱스가 담긴 리스트를 만듭니다.
+        // 1) 0~6번 슬롯 인덱스가 담긴 리스트를 만듭니다.
         List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
 
-        // 2. 리스트를 무작위로 섞습니다 (Fisher-Yates Shuffle).
+        // 2) 리스트를 무작위로 섞습니다 (Fisher-Yates Shuffle).
         for (int i = 0; i < slotIndices.Count; i++)
         {
             int temp = slotIndices[i];
@@ -174,31 +215,83 @@ public class MonsterController
             slotIndices[randomIndex] = temp;
         }
 
-        // 3. 적용에 성공한 횟수를 셉니다.
+        // 3) 적용에 성공한 횟수를 셉니다.
         int successCount = 0;
 
-        // 4. 무작위로 섞인 슬롯 순서대로 확인합니다.
+        // 4) 무작위로 섞인 슬롯 순서대로 확인합니다.
         foreach (int index in slotIndices)
         {
             Card card = GetCardAtIndex(index); // (방금 위에 추가한 헬퍼 함수)
 
-            // 5. 슬롯이 비어있지 않은지 확인
+            // 5) 슬롯이 비어있지 않은지 확인
             if (card != null)
             {
-                // 6. [핵심!] 카드에게 효과 적용을 '시도'합니다.
+                // 6) 카드에게 효과 적용 시도
                 // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 합니다!)
                 if (card.ApplyStatusEffect(effectType, duration))
                 {
-                    // 7. 적용에 성공했으면, 카운트를 1 올립니다.
+                    // 7) 적용에 성공했으면, 카운트 1 증가
                     successCount++;
                 }
             }
 
-            // 8. 목표한 횟수(count)만큼 성공했으면, 즉시 종료합니다.
+            // 8) 목표한 횟수(count)만큼 성공했으면, 즉시 종료
             if (successCount >= count)
             {
                 break;
             }
         }
+    }
+
+    // --- 9. UI 업데이트 함수 ---
+    // 현재 체력(HP)과 쉴드(Shield) 변수를 실제 UI 바(Bar)와 텍스트(Label)에 적용
+    protected virtual void UpdateHealthUI()
+    {
+        if (m_HealthBarFill != null)
+        {
+            float healthPercent = (MaxHP > 0) ? (CurrentHP / MaxHP) : 0f;
+            m_HealthBarFill.style.width = Length.Percent(healthPercent * 100f);
+        }
+
+        if (m_HealthLabel != null)
+        {
+            m_HealthLabel.text = $"HP: {Mathf.CeilToInt(CurrentHP)} / {MaxHP}";
+        }
+
+        if (m_ShieldLabel != null)
+        {
+            m_ShieldLabel.text = $"SHIELD: {Mathf.CeilToInt(CurrentShield)}";
+        }
+
+        if (m_ShieldBarFill != null)
+        {
+            if (CurrentShield > 0)
+            {
+                m_ShieldBarFill.style.display = DisplayStyle.Flex;
+                float shieldPercent = Mathf.Clamp(CurrentShield / MaxHP, 0, 1f);
+                m_ShieldBarFill.style.width = Length.Percent(shieldPercent * 100f);
+            }
+            else
+            {
+                m_ShieldBarFill.style.display = DisplayStyle.None;
+            }
+        }
+    }
+
+
+    // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
+    // --------------------------------------------------------------------------------------
+
+    /// <param name="cardNames">덱에 넣을 카드 이름 목록 (예: "Monster")</param>
+
+    public virtual void SetupDeck(string[] cardNames)
+    {
+        // (프로토타입용 하드코딩)
+        // 'this'는 "MonsterController 자신"을 의미합니다.
+        // Card.cs를 상속받은 Card_Monster.cs가 있다고 가정
+
+        // m_Cards[1] = new Card_Monster(this); // 2번 슬롯에 몬스터 생성
+
+        // (쿨타임 초기화 로직...)
     }
 }

@@ -5,44 +5,188 @@ VisualElement {
     flex-direction: row;
     justify-content: center;
     position: absolute;
-    bottom: 22.5%;
+    bottom: 27.5%;
     align-self: center;
 }
 
 .CardSlot {
     width: 140px;
     height: 210px;
-
     flex-grow: 0;
     flex-shrink: 0;
-
-    /* ----- í”„ë¡œí† íƒ€ì…ìš©: ëˆˆì— ë³´ì´ê²Œ í•˜ê¸° ----- */
     background-color: rgba(50, 50, 50, 0.7);
     border-right-width: 1px;
     border-top-width: 1px;
     border-bottom-width: 1px;
-    border-color: #222;
+    border-color: rgb(34, 34, 34);
 }
 
 .MonsterPartyPanel {
     flex-direction: row;
     justify-content: center;
     position: absolute;
-    top: 22.5%;
+    top: 27.5%;
     align-self: center;
 }
 
-/* (ë””í´íŠ¸) 3ì¹¸ì§œë¦¬ ì¤‘ì•™ ë³´ìŠ¤ ìŠ¬ë¡¯ */
 .card-1-slot {
     width: 140px;
 }
 
-/* (ë³´ìŠ¤ì „ìš©) 3ì¹¸ì§œë¦¬ ì¤‘ì•™ ë³´ìŠ¤ ìŠ¬ë¡¯ */
 .boss-slot-center {
-    width: 420px; /* 140px * 3 */
+    width: 420px;
 }
 
-/* (ë³´ìŠ¤ì „ìš©) ë³´ìŠ¤ì—ê²Œ ë®ì–´ì”Œì›Œì ¸ ìˆ¨ê²¨ì§ˆ ìŠ¬ë¡¯ */
 .boss-slot-hidden {
     display: none;
+}
+
+.StatusPanel {
+    flex-direction: row;
+    align-self: center;
+    position: absolute;
+    height: 200px;
+}
+
+.PlayerStatusPanel {
+    bottom: 2.5%;
+}
+
+.MonsterStatusPanel {
+    top: 2.5%
+}
+
+.Portrait {
+    width: 200px;
+    height: 200px;
+    margin-right: 25px;
+    flex-shrink: 0;
+    background-color: rgba(30, 30, 30, 0.8);
+    border-width: 2px;
+    border-color: white;
+}
+
+.LordInfoBar {
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 1000px;
+    justify-content: flex-start;
+
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.MonsterInfoBar {
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 1000px;
+    justify-content: flex-start;
+
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.statusbar {
+    flex-shrink: 0;
+    background-color: transparent;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.xp-bar {
+    height: 40px; /* ¾ãÀº XP ¹Ù */
+    
+    /* °ãÄ¡´Â ´ë½Å '°¡·Î Á¤·Ä'·Î º¯°æ */
+    flex-direction: row;
+    /* ¶óº§°ú ³×¸ğÄ­µéÀ» ¼¼·Î Áß¾Ó¿¡ Á¤·Ä */
+    align-items: center; 
+    
+    /* ¶óº§°ú ³×¸ğÄ­µé »çÀÌÀÇ °£°İ */
+    justify-content: space-between; 
+    
+    /* ¹Ù ÁÂ¿ì¿¡ ¿©¹é Ãß°¡ */
+    padding-left: 10px;
+}
+
+.hp-bar {
+    height: 65px;
+    margin-top: 10px;
+    border-width: 2px; /* ¿Ü°û¼± µÎ²² */
+    border-color: #000000;
+}
+
+.shield-bar {
+    height: 50px;
+    margin-top: 10px;
+    border-width: 2px; /* ¿Ü°û¼± µÎ²² */
+    border-color: #000000;
+}
+
+.bar-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    color: white;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    font-size: 16px;
+}
+
+.xp-label {
+    -unity-text-align: middle-left;
+    color: white;
+    -unity-font-style: bold;
+    font-size: 16px;
+    
+    flex-shrink: 0; 
+    
+    margin-right: 10px;
+}
+
+.status-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 5px;
+}
+
+.hp-bar-fill {
+    background-color: rgb(46, 204, 113);
+    width: 20%;
+}
+
+.shield-bar-fill {
+    background-color: rgb(255, 220, 0);
+    width: 10%;
+}
+
+.xp-ticks-container {
+    flex-direction: row; /* ³×¸ğµéÀ» °¡·Î·Î Á¤·Ä */
+    margin-left: 50px;
+}
+
+.xp-tick {
+    /* (¿¹½Ã) 20x20 Å©±âÀÇ ³×¸ğ */
+    width: 20px;
+    height: 20px;
+    
+    /* ³×¸ğ »çÀÌÀÇ °£°İ */
+    margin-left: 3px; 
+    
+    /* (±âº») ºñ¾îÀÖ´Â Ä­ »ö»ó */
+    background-color: #555; 
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: #AAA;
+}
+
+/* [½Å±Ô!] C# ½ºÅ©¸³Æ®°¡ Ãß°¡ÇÒ 'Ã¤¿öÁø' Ä­ ½ºÅ¸ÀÏ */
+.xp-tick-filled {
+    background-color: #00A2FF; /* ÆÄ¶õ»ö */
+    border-color: #FFF;
 }
