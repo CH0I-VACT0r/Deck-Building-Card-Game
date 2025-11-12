@@ -16,8 +16,6 @@ public class BattleManager : MonoBehaviour
 
     // --- 2. UI 참조 ---
     private VisualElement m_Root;
-    private VisualElement m_PlayerPartyPanel;
-    private VisualElement m_MonsterPartyPanel;
 
     // --- 3. 전투 상태 ---
     private bool m_IsBattleEnded = false;
@@ -27,29 +25,24 @@ public class BattleManager : MonoBehaviour
     /// 이 스크립트가 활성화될 때 (게임 시작 시) 호출됩니다
     void OnEnable()
     {
-        // 1. UXML 루트 요소 찾기
-        m_Root = GetComponent<UIDocument>().rootVisualElement;
+        // 1) UXML 루트 요소 찾기
+        m_Root = GetComponent<UIDocument>().rootVisualElement; 
 
-        // 2. UXML에서 이름으로 파티 패널 찾기
-        m_PlayerPartyPanel = m_Root.Q<VisualElement>("PlayerParty");
-        m_MonsterPartyPanel = m_Root.Q<VisualElement>("MonsterParty");
-
-        if (m_PlayerPartyPanel == null || m_MonsterPartyPanel == null)
+        if (m_Root == null)
         {
-            Debug.LogError("### UXML에서 'PlayerParty' 또는 'MonsterParty' 패널을 찾을 수 없습니다! UXML의 'Name'을 확인하세요. ###");
+            Debug.LogError("### UIDocument 컴포넌트나 Source Asset(UXML)이 없습니다! ###");
             return;
         }
 
-        // 3. 컨트롤러를 직접 생성하지 않고, '공장(Factory)'에 요청
-        //    '공장'이 GameSessionData를 읽어와서 알맞은 컨트롤러 생성.
-        playerController = ControllerFactory.CreatePlayerController(this, m_PlayerPartyPanel);
-        monsterController = ControllerFactory.CreateMonsterController(this, m_MonsterPartyPanel);
+        // 2) Root 바로 전달
+        playerController = ControllerFactory.CreatePlayerController(this, m_Root);
+        monsterController = ControllerFactory.CreateMonsterController(this, m_Root);
 
-        // 4. 타겟 지정 (서로가 누굴 공격할지 알려줌)
+        // 3) 타겟 지정 (서로가 누굴 공격할지 알려줌)
         playerController.SetTarget(monsterController);
         monsterController.SetTarget(playerController);
 
-        // 5. 덱 설정 (프로토타입: 컨트롤러가 스스로 자신의 덱을 설정하도록 함)
+        // 4) 덱 설정 (프로토타입: 컨트롤러가 스스로 자신의 덱을 설정하도록 함)
         //    (SetupDeck 함수는 이제 각 컨트롤러가 알아서 본인 덱 설정)
         playerController.SetupDeck(null); // (나중에는 GameSessionData에서 덱 정보를 받아와 넘겨줄 수 있다)
         monsterController.SetupDeck(null);
@@ -69,7 +62,7 @@ public class BattleManager : MonoBehaviour
 
 
     // --- 5. 공용 함수 ---
-    /// 전투 종료를 선언하는 함수 (컨트롤러들이 호출)
+    /// 전투 종료를 선언하는 함수
     /// <param name="winner">승자 ("Player" 또는 "Monster")</param>
 
     public void EndBattle(string winner)

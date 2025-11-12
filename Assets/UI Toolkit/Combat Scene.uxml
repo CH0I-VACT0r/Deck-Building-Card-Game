@@ -19,5 +19,49 @@
             <ui:VisualElement name="MonSlot6" class="CardSlot" style="flex-grow: 1;" />
             <ui:VisualElement name="MonSlot7" class="CardSlot" style="flex-grow: 1;" />
         </ui:VisualElement>
+        <ui:VisualElement name="PlayerStatus" class="PlayerStatusPanel StatusPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="Portrait" class="Portrait" style="flex-grow: 1;" />
+            <ui:VisualElement name="StatusBar" class="LordInfoBar" style="flex-grow: 1;">
+                <ui:VisualElement name="XP-Bar" class="statusbar xp-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="LV-label" class="bar-label xp-label" />
+                    <ui:VisualElement name="XP-Ticks-Container" class="xp-ticks-container" style="flex-grow: 1;">
+                        <ui:VisualElement name="XPTick0" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick1" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick2" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick3" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick4" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick5" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick6" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick7" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick8" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick9" class="xp-tick" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="HP-Bar" class="statusbar hp-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="HP-label" class="bar-label" />
+                    <ui:VisualElement name="HP-Bar-Fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="Shield-label" class="bar-label" />
+                    <ui:VisualElement name="Shield-Bar_Fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="MonsterStatus" class="StatusPanel MonsterStatusPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="MonsterPortrait" class="Portrait" style="flex-grow: 1;" />
+            <ui:VisualElement name="MonsterInfoBar" class="MonsterInfoBar" style="flex-grow: 1;">
+                <ui:VisualElement name="MonsterName" class="statusbar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="MonsterName-label" class="xp-label bar-label" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Monster-HP-Bar" class="hp-bar statusbar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="Monster-HP-label" class="bar-label" />
+                    <ui:VisualElement name="Monster-HP-fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Monster_Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="Monster-Shield-label" class="bar-label" />
+                    <ui:VisualElement name="Monster-Shield-fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
