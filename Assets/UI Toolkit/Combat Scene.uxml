@@ -38,8 +38,8 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="HP-Bar" class="statusbar hp-bar" style="flex-grow: 1;">
-                    <ui:Label text="Label" name="HP-label" class="bar-label" />
                     <ui:VisualElement name="HP-Bar-Fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="HP-label" class="bar-label" />
                     <ui:VisualElement name="Status-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
                         <ui:Label text="🩸0" name="BleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
                         <ui:Label text="☠️ 0" name="PoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
@@ -47,20 +47,20 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
-                    <ui:Label text="Label" name="Shield-label" class="bar-label" />
                     <ui:VisualElement name="Shield-Bar_Fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="Shield-label" class="bar-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="MonsterStatus" class="StatusPanel MonsterStatusPanel" style="flex-grow: 1;">
             <ui:VisualElement name="MonsterPortrait" class="Portrait" style="flex-grow: 1;" />
             <ui:VisualElement name="MonsterInfoBar" class="MonsterInfoBar" style="flex-grow: 1;">
-                <ui:VisualElement name="MonsterName" class="statusbar" style="flex-grow: 1;">
+                <ui:VisualElement name="MonsterName" class="statusbar xp-bar" style="flex-grow: 1;">
                     <ui:Label text="Label" name="MonsterName-label" class="xp-label bar-label" />
                 </ui:VisualElement>
                 <ui:VisualElement name="Monster-HP-Bar" class="hp-bar statusbar" style="flex-grow: 1;">
-                    <ui:Label text="Label" name="Monster-HP-label" class="bar-label" />
                     <ui:VisualElement name="Monster-HP-fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="Monster-HP-label" class="bar-label" />
                     <ui:VisualElement name="Monster-Status-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
                         <ui:Label text="🩸0" name="MonsterBleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
                         <ui:Label text="☠️ 0" name="MonsterPoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
@@ -68,8 +68,8 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="Monster_Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
-                    <ui:Label text="Label" name="Monster-Shield-label" class="bar-label" />
                     <ui:VisualElement name="Monster-Shield-fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="Monster-Shield-label" class="bar-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

@@ -157,12 +157,11 @@ VisualElement {
 
 .hp-bar-fill {
     background-color: rgb(46, 204, 113);
-    width: 20%;
 }
 
 .shield-bar-fill {
     background-color: rgb(255, 220, 0);
-    width: 10%;
+    width: 0%;
 }
 
 .xp-ticks-container {
