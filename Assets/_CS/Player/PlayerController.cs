@@ -20,7 +20,6 @@ public class PlayerController
     // --- 2. UI 요소 ---
     protected VisualElement m_PlayerParty; // 7칸 카드 슬롯 패널
     protected VisualElement m_StatusPanel; // 상태 패널 UI
-
     // 7개의 카드 슬롯 UI 요소 리스트
     public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7);
 
@@ -30,9 +29,13 @@ public class PlayerController
     private Label m_HealthLabel;
     private Label m_ShieldLabel;
     private Label m_LevelLabel;
-
     // 10칸 네모 XP 바를 위한 리스트
     private List<VisualElement> m_XPTicks = new List<VisualElement>(10);
+
+    // DoT 도트 대미지 아이콘 UI 라벨
+    private Label m_BleedStatusLabel;
+    private Label m_PoisonStatusLabel;
+    private Label m_BurnStatusLabel;
 
     // --- 3. 핵심 상태 (공통) ---
     public float CurrentHP { get; protected set; } /// 영주의 현재 체력
@@ -42,6 +45,17 @@ public class PlayerController
     public int CurrentLevel { get; protected set; } = 1; /// 현재 레벨
     public int CurrentXP { get; protected set; } = 0; /// 현재 경험치 
     public int MaxXP { get; protected set; } = 10; /// 최대 경험치
+
+    // DoT 중첩 변수
+    public int BleedStacks { get; protected set; } = 0;
+    public int PoisonStacks { get; protected set; } = 0;
+    public int BurnStacks { get; protected set; } = 0;
+
+    // DoT 데미지 타이머 (개별 관리)
+    private float m_BleedTickTimer = 1.5f;   // 출혈 : 1.5초 
+    private float m_PoisonTickTimer = 3.0f;  // 중독 : 3초 
+    private float m_BurnTickTimer = 0.5f;    // 화상 : 0.5초
+
 
     // --- 4. 카드 덱 관리 ---
     /// 이 영주가 현재 전투에서 사용하는 7칸의 카드 배열
@@ -86,6 +100,11 @@ public class PlayerController
             {
                 m_XPTicks.Add(m_StatusPanel.Q<VisualElement>("XPTick" + i));
             }
+
+            //DoT 아이콘 라벨 찾기
+            m_BleedStatusLabel = m_StatusPanel.Q<Label>("BleedStatus");
+            m_PoisonStatusLabel = m_StatusPanel.Q<Label>("PoisonStatus");
+            m_BurnStatusLabel = m_StatusPanel.Q<Label>("BurnStatus");
         }
         else
         {
@@ -95,6 +114,7 @@ public class PlayerController
         // 4. UI를 현재 상태로 즉시 업데이트
         UpdateHealthUI();
         UpdateXPUI();
+        UpdateDoTUI();
     }
 
     // --- 6. 핵심 함수 ---
@@ -119,6 +139,8 @@ public class PlayerController
                 }
             }
         }
+        // DoT 데미지 타이머 돌리기
+        ProcessDoTs(deltaTime);
     }
 
     /// (공통) 몬스터가 나를 공격할 때 호출하는 함수
@@ -280,7 +302,118 @@ public class PlayerController
         }
     }
 
-    // --- 9. UI 업데이트 함수 ---
+    /// <summary>
+    /// [신규!] (카드들이 호출) 이 영주에게 DoT 중첩을 추가합니다.
+    /// </summary>
+    public virtual void ApplyLordDoT(StatusEffectType effectType, int stacks)
+    {
+        switch (effectType)
+        {
+            case StatusEffectType.Bleed:
+                BleedStacks += stacks;
+                break;
+            case StatusEffectType.Poison:
+                PoisonStacks += stacks;
+                break;
+            case StatusEffectType.Burn:
+                BurnStacks += stacks;
+                break;
+        }
+        UpdateDoTUI(); // UI 업데이트
+    }
+
+    /// <summary>
+    /// [신규!] 특정 DoT 중첩을 '일정 수치(정수)'만큼 감소시킵니다.
+    /// </summary>
+    public virtual void ReduceLordDoT(StatusEffectType effectType, int amount)
+    {
+        switch (effectType)
+        {
+            case StatusEffectType.Bleed:
+                BleedStacks = Mathf.Max(0, BleedStacks - amount);
+                break;
+            case StatusEffectType.Poison:
+                PoisonStacks = Mathf.Max(0, PoisonStacks - amount);
+                break;
+            case StatusEffectType.Burn:
+                BurnStacks = Mathf.Max(0, BurnStacks - amount);
+                break;
+        }
+        UpdateDoTUI(); // UI 업데이트
+    }
+
+    /// <summary>
+    /// [신규!] 특정 DoT 중첩을 '일정 퍼센트(%)'만큼 감소시킵니다.
+    /// </summary>
+    public virtual void ReduceLordDoTPercent(StatusEffectType effectType, float percent)
+    {
+        float clampedPercent = Mathf.Clamp01(percent);
+        switch (effectType)
+        {
+            case StatusEffectType.Bleed:
+                BleedStacks = Mathf.FloorToInt(BleedStacks * (1.0f - clampedPercent));
+                break;
+            case StatusEffectType.Poison:
+                PoisonStacks = Mathf.FloorToInt(PoisonStacks * (1.0f - clampedPercent));
+                break;
+            case StatusEffectType.Burn:
+                BurnStacks = Mathf.FloorToInt(BurnStacks * (1.0f - clampedPercent));
+                break;
+        }
+        UpdateDoTUI(); // UI 업데이트
+    }
+
+    // --- 9. DoT 데미지 처리---
+    // '개별' 타이머로 DoT 데미지를 계산 및 적용
+    private void ProcessDoTs(float deltaTime)
+    {
+        // (1) 출혈 (1.5초 틱, 쉴드부터 깎음)
+        if (BleedStacks > 0)
+        {
+            m_BleedTickTimer -= deltaTime;
+            if (m_BleedTickTimer <= 0f)
+            {
+                float damage = BleedStacks * 1; // (스택당 1데미지)
+                TakeDamage(damage);
+                Debug.Log($"[DoT] 출혈로 {damage} 피해!");
+                m_BleedTickTimer = 1.5f; // 1.5초 타이머 초기화
+            }
+        }
+
+        // (2) 중독 (3초 틱, 쉴드 무시)
+        if (PoisonStacks > 0)
+        {
+            m_PoisonTickTimer -= deltaTime;
+            if (m_PoisonTickTimer <= 0f)
+            {
+                float damage = PoisonStacks * 1;
+                CurrentHP -= damage; // 쉴드를 무시하고 체력에 직접 피해
+                Debug.Log($"[DoT] 중독으로 {damage} 피해! (쉴드 무시)");
+                UpdateHealthUI(); // 체력이 바로 바뀌었으니 UI 업데이트
+                m_PoisonTickTimer = 3.0f; // 3초 타이머 초기화
+            }
+        }
+
+        // (3) 화상 (0.5초 틱, 쉴드부터 깎음, 1스택 '고갈')
+        if (BurnStacks > 0)
+        {
+            m_BurnTickTimer -= deltaTime;
+            if (m_BurnTickTimer <= 0f)
+            {
+                float damage = BurnStacks * 1; // (예: 틱당 1데미지)
+                TakeDamage(damage);
+                Debug.Log($"[DoT] 화상으로 {damage} 피해!");
+
+                // 피해를 입힌 후 1스택 감소
+                BurnStacks -= 1;
+                UpdateDoTUI(); // 스택이 바뀌었으니 UI 업데이트
+
+                m_BurnTickTimer = 0.5f; // 0.5초 타이머 초기화
+            }
+        }
+    }
+
+    // --- 10. UI 업데이트 함수 ---
     protected virtual void UpdateHealthUI()
     {
         // 체력 바
@@ -348,7 +481,51 @@ public class PlayerController
         }
     }
 
+    // DoT 중첩을 UI 라벨에 업데이트하고, 0이면 숨김.
+    protected virtual void UpdateDoTUI()
+    {
+        // 출혈 UI
+        if (m_BleedStatusLabel != null)
+        {
+            if (BleedStacks > 0)
+            {
+                m_BleedStatusLabel.text = $"BLEED : {BleedStacks}";
+                m_BleedStatusLabel.style.display = DisplayStyle.Flex; // 보이기
+            }
+            else
+            {
+                m_BleedStatusLabel.style.display = DisplayStyle.None; // 숨기기
+            }
+        }
 
+        // 중독 UI
+        if (m_PoisonStatusLabel != null)
+        {
+            if (PoisonStacks > 0)
+            {
+                m_PoisonStatusLabel.text = $"POISON : {PoisonStacks}";
+                m_PoisonStatusLabel.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                m_PoisonStatusLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        // 화상 UI
+        if (m_BurnStatusLabel != null)
+        {
+            if (BurnStacks > 0)
+            {
+                m_BurnStatusLabel.text = $"BURN : {BurnStacks}";
+                m_BurnStatusLabel.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                m_BurnStatusLabel.style.display = DisplayStyle.None;
+            }
+        }
+    }
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------
