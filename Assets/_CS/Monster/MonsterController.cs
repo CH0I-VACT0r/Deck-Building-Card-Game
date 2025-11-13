@@ -173,8 +173,7 @@ public class MonsterController
     }
 
     /// (공통) 나의 '타겟'(플레이어)이 누구인지 알려주는 함수.
-    /// 몬스터 카드들이 이 함수를 호출하여 플레이어를 공격합니다.
-
+    /// 몬스터 카드들이 이 함수를 호출하여 플레이어 공격
     public PlayerController GetTarget()
     {
         return m_Target;
@@ -449,6 +448,36 @@ public class MonsterController
             }
         }
     }
+
+    public virtual void UpdateCardSlotUI(int index)
+    {
+        // 1. 인덱스가 유효한지 확인
+        if (index < 0 || index >= 7) return;
+
+        // 2. C# 데이터와 UI 슬롯을 가져옵니다.
+        Card cardData = m_Cards[index];
+        VisualElement slotUI = Slots[index];
+
+        if (slotUI == null) return; // UI 슬롯이 없으면 종료
+
+        // 3. 카드 데이터에 따라 UI를 업데이트
+        if (cardData != null) // 슬롯에 카드가 있다면
+        {
+            // [신규!] UXML 슬롯의 배경 이미지를 카드의 이미지로 설정
+            slotUI.style.backgroundImage = new StyleBackground(cardData.CardImage);
+
+            // (나중에 여기에 쿨타임 UI, 상단 네모 UI를 업데이트하는 코드 추가)
+            // (예: slotUI.Q<Label>("DamageLabel").text = cardData.BaseDamage.ToString();)
+        }
+        else // 슬롯이 비어있다면
+        {
+            // 배경 이미지를 '없음(null)'으로 설정하여 투명하게
+            slotUI.style.backgroundImage = null;
+
+            // (나중에 쿨타임 UI, 상단 네모 UI를 숨기는 코드 추가)
+        }
+    }
+
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------

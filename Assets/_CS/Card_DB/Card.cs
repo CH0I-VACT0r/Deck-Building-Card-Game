@@ -1,4 +1,3 @@
-
 /// 모든 카드(용병, 몬스터, 장비, 건축물 등등)의 공통 설계 추상 클래스
 /// 이 클래스를 상속받아 실제 카드 제작하면 됨
 using UnityEngine;
@@ -8,18 +7,16 @@ public abstract class Card
 {
     // 1. 공통 데이터 
     // 모든 카드가 공통적으로 가지는 속성
-
-    /// 카드 이름
-    public string CardName { get; protected set; }
-
-    /// 카드의 기본 스킬 쿨타임 (초)
-    public float CooldownTime { get; protected set; }
+    public string CardName { get; protected set; } // 카드 이름
+    public Sprite CardImage { get; protected set; } // 카드 이미지
+    public CardRarity Rarity { get; protected set; } // 카드 등급
+    public float CooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
 
     /// 현재 남은 쿨타임. 0이 되면 스킬 발동
     public float CurrentCooldown { get; set; }
 
     /// 이 카드를 소유하고 관리하는 '주인' (플레이어 또는 몬스터)
-    protected PlayerController m_Owner;
+    protected object m_Owner;
 
     /// 카드가 몇 번 슬롯에 있는지
     public int SlotIndex { get; private set; }
@@ -30,9 +27,6 @@ public abstract class Card
     public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>();
     private bool m_IsFrozen = false;
     private float m_FreezeTimer = 0f;
-
-    // (나중에 m_BleedStacks, m_PoisonStacks 등도 여기에 추가)
-
 
 
     // --- [태그] ---
@@ -46,7 +40,7 @@ public abstract class Card
     /// <param name="cooldown">이 카드의 기본 쿨타임 </param>
     /// <param name="index">이 카드의 위치 </param>
 
-    public Card(PlayerController owner, int index, float cooldown)
+    public Card(object owner, int index, float cooldown)
     {
         this.m_Owner = owner;
         this.SlotIndex = index;
@@ -115,13 +109,7 @@ public abstract class Card
                 m_FreezeTimer = duration;
                 Debug.Log($"[{this.CardName}] (이)가 {duration}초간 빙결되었습니다!");
                 break;
-
-                // (나중에 출혈, 중독 로직 추가...)
-                // case StatusEffectType.Bleed:
-                //    m_BleedStacks += (int)duration; // duration을 중첩 횟수로 사용
-                //    break;
         }
-
         return true; 
     }
 }

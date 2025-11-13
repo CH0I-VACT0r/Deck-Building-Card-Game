@@ -302,9 +302,7 @@ public class PlayerController
         }
     }
 
-    /// <summary>
-    /// [신규!] (카드들이 호출) 이 영주에게 DoT 중첩을 추가합니다.
-    /// </summary>
+    /// 이 영주에게 DoT 중첩 추가
     public virtual void ApplyLordDoT(StatusEffectType effectType, int stacks)
     {
         switch (effectType)
@@ -322,9 +320,8 @@ public class PlayerController
         UpdateDoTUI(); // UI 업데이트
     }
 
-    /// <summary>
-    /// [신규!] 특정 DoT 중첩을 '일정 수치(정수)'만큼 감소시킵니다.
-    /// </summary>
+
+    /// 특정 DoT 중첩을 '일정 수치(정수)'만큼 감소
     public virtual void ReduceLordDoT(StatusEffectType effectType, int amount)
     {
         switch (effectType)
@@ -342,9 +339,7 @@ public class PlayerController
         UpdateDoTUI(); // UI 업데이트
     }
 
-    /// <summary>
-    /// [신규!] 특정 DoT 중첩을 '일정 퍼센트(%)'만큼 감소시킵니다.
-    /// </summary>
+    /// 특정 DoT 중첩을 '일정 퍼센트(%)'만큼 감소
     public virtual void ReduceLordDoTPercent(StatusEffectType effectType, float percent)
     {
         float clampedPercent = Mathf.Clamp01(percent);
@@ -526,6 +521,35 @@ public class PlayerController
             }
         }
     }
+
+    public virtual void UpdateCardSlotUI(int index)
+    {
+        // 1. 인덱스가 유효한지 확인
+        if (index < 0 || index >= 7) return;
+
+        // 2. C# 데이터와 UI 슬롯을 가져옵니다.
+        Card cardData = m_Cards[index];
+        VisualElement slotUI = Slots[index];
+
+        if (slotUI == null) return; // UI 슬롯이 없으면 종료
+
+        // 3. 카드 데이터에 따라 UI 업데이트
+        if (cardData != null) 
+        {
+            // UXML 슬롯의 배경 이미지를 카드의 이미지로 설정합니다.
+            slotUI.style.backgroundImage = new StyleBackground(cardData.CardImage);
+
+            // (나중에 여기에 카드의 쿨타임, 상단 네모 UI를 업데이트하는 코드 추가)
+        }
+        else // 슬롯이 비어있다면
+        {
+            // 배경 이미지를 '없음(null)'으로 설정하여 투명하게 만듭니다.
+            slotUI.style.backgroundImage = null;
+
+            // (나중에 쿨타임 UI, 상단 네모 UI를 숨기는 코드 추가)
+        }
+    }
+
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------

@@ -52,27 +52,19 @@ public class Lord_SevereCold_Controller : PlayerController
 
     /// PlayerController의 '프로토타입용 덱 설정' 함수를 override
     /// <param name="cardNames">BattleManager로부터 전달받은 덱 정보 (지금은 null)</param>
-   
+
+
+
+
+
+
+    // [프로토타입용 하드코딩]
+    // '혹한의 성주' 덱을 생성
     public override void SetupDeck(string[] cardNames)
     {
-        // (나중에는 cardNames 배열이나 GameSessionData를 기반으로 덱을 생성해야 합니다)
 
-        // [프로토타입용 하드코딩]
-        // '혹한의 성주' 덱을 생성
-        // 'this'는 "Lord_SevereCold_Controller 자신"을 의미
-
-        // 2번 슬롯(m_Cards[1])에 카드1 생성
-        // (Card1_"Name".cs가 'PlayerController'를 받도록 수정해야 합니다.)
-        //  예시)
-        /// m_Cards[1] = new Card1_"Name"(this);
-        /// m_Cards[1].Tags.Add("#북방 야만전사");
-        /// m_Cards[1].Tags.Add("#어태커");
-
-        // 3번 슬롯(m_Cards[2])에 카드2 생성
-        // (Card_Shieldbearer.cs가 'PlayerController'를 받도록 수정해야 합니다.)
-        /// m_Cards[2] = new Card2_"Name"(this);
-        /// m_Cards[2].Tags.Add("#탱커");
-
+        m_Cards[0] = new Card_BarbarianWarrior(this, 0);
+        UpdateCardSlotUI(0);
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 혹한의 성주 전용 덱 설정 완료.");
 
         // 쿨타임 초기화
@@ -82,6 +74,4 @@ public class Lord_SevereCold_Controller : PlayerController
                 m_Cards[i].CurrentCooldown = m_Cards[i].CooldownTime;
         }
     }
-
-    // (TakeDamage, GetTarget 등 다른 함수들은 부모의 것을 그대로 사용하므로 여기에 다시 작성할 필요가 없다.)
 }
