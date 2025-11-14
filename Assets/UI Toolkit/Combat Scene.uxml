@@ -2,22 +2,78 @@
     <Style src="project://database/Assets/UI%20Toolkit/Combat%20Scene%20Styles.uss?fileID=7433441132597879392&amp;guid=a48c491a29f71064c8cb8761a7204072&amp;type=3#Combat Scene Styles" />
     <ui:VisualElement style="flex-grow: 1;">
         <ui:VisualElement name="PlayerParty" class="PlayerPartyPanel" style="flex-grow: 1;">
-            <ui:VisualElement name="CardSlot1" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot2" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot3" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot4" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot5" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot6" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="CardSlot7" class="CardSlot" style="flex-grow: 1;" />
+            <ui:VisualElement name="CardSlot1" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none; translate: 0% 0 1px;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot2" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot3" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot4" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot5" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none; transform-origin: center center 0;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot6" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot7" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="MonsterParty" class="MonsterPartyPanel" style="flex-grow: 1;">
-            <ui:VisualElement name="MonSlot1" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot2" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot3" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot4" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot5" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot6" class="CardSlot" style="flex-grow: 1;" />
-            <ui:VisualElement name="MonSlot7" class="CardSlot" style="flex-grow: 1;" />
+            <ui:VisualElement name="MonSlot1" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot2" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot3" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot4" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot5" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot6" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot7" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="PlayerStatus" class="PlayerStatusPanel StatusPanel" style="flex-grow: 1;">
             <ui:VisualElement name="Portrait" class="Portrait" style="flex-grow: 1;" />
@@ -45,6 +101,9 @@
                         <ui:Label text="☠️ 0" name="PoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
                         <ui:Label text="🔥 0" name="BurnStatus" class="status-effect-icon burn-status" style="display: none;" />
                     </ui:VisualElement>
+                    <ui:VisualElement name="Buff-Effect-Container" class="buff-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="💚 0" name="HealStatus" class="status-effect-icon heal-status" style="display: none;" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
                     <ui:VisualElement name="Shield-Bar_Fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
@@ -65,6 +124,9 @@
                         <ui:Label text="🩸0" name="MonsterBleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
                         <ui:Label text="☠️ 0" name="MonsterPoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
                         <ui:Label text="🔥 0" name="MonsterBurnStatus" class="poison-status status-effect-icon" style="display: none;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Monster-Buff-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="Label" name="MonsterHealStatus" class="status-effect-icon heal-status" style="display: none;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="Monster_Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">

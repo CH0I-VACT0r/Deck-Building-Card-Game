@@ -8,6 +8,7 @@ public enum StatusEffectType
     None,
     Bleed,  // 출혈
     Poison,  // 중독
+    Heal, // 회복
     Burn, // 화상
     Freeze // 빙결
     // (나중에 '기절' 등 추가...)

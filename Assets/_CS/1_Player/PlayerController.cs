@@ -9,19 +9,14 @@ using System.Collections.Generic; // List 사용
 public class PlayerController
 {
     // --- 1. 참조 변수 ---
-
-    /// 전투의 규칙을 관리
-    /// protected: 이 클래스를 상속받는 자식 클래스(영주)도 접근 가능
-    protected BattleManager m_BattleManager;
-
-    /// 내가 공격해야 할 '타겟' (몬스터 컨트롤러)
-    protected MonsterController m_Target;
+    protected BattleManager m_BattleManager; // 전투의 규칙을 관리
+    protected MonsterController m_Target; // 공격해야 할 타겟 (몬스터 컨트롤러)
 
     // --- 2. UI 요소 ---
+    protected VisualElement m_LordPortrait; // 초상화 패널
     protected VisualElement m_PlayerParty; // 7칸 카드 슬롯 패널
     protected VisualElement m_StatusPanel; // 상태 패널 UI
-    // 7개의 카드 슬롯 UI 요소 리스트
-    public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7);
+    public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7); // 7개의 카드 슬롯 UI 요소 리스트
 
     // 상태 패널 요소
     private VisualElement m_HealthBarFill;
@@ -29,13 +24,18 @@ public class PlayerController
     private Label m_HealthLabel;
     private Label m_ShieldLabel;
     private Label m_LevelLabel;
-    // 10칸 네모 XP 바를 위한 리스트
-    private List<VisualElement> m_XPTicks = new List<VisualElement>(10);
+    private List<VisualElement> m_XPTicks = new List<VisualElement>(10); // 10칸 네모 XP 바를 위한 리스트
 
     // DoT 도트 대미지 아이콘 UI 라벨
     private Label m_BleedStatusLabel;
     private Label m_PoisonStatusLabel;
     private Label m_BurnStatusLabel;
+    private Label m_HealStatusLabel;
+
+    // 역할 UI 컨테이너 리스트
+    private List<VisualElement> m_RoleUIContainers = new List<VisualElement>(7);
+    private List<VisualElement> m_CooldownOverlays = new List<VisualElement>(7);
+    private List<VisualElement> m_CardImageLayers = new List<VisualElement>(7);
 
     // --- 3. 핵심 상태 (공통) ---
     public float CurrentHP { get; protected set; } /// 영주의 현재 체력
@@ -50,11 +50,13 @@ public class PlayerController
     public int BleedStacks { get; protected set; } = 0;
     public int PoisonStacks { get; protected set; } = 0;
     public int BurnStacks { get; protected set; } = 0;
+    public int HealStacks { get; protected set; } = 0;
 
     // DoT 데미지 타이머 (개별 관리)
     private float m_BleedTickTimer = 1.5f;   // 출혈 : 1.5초 
     private float m_PoisonTickTimer = 3.0f;  // 중독 : 3초 
     private float m_BurnTickTimer = 0.5f;    // 화상 : 0.5초
+    private float m_HealTickTimer = 2.0f; // 회복 : 2초
 
 
     // --- 4. 카드 덱 관리 ---
@@ -63,11 +65,10 @@ public class PlayerController
 
 
     // --- 5. 생성자 ---
-    /// PlayerController가 처음 생성될 때 호출됩니다.
+    /// PlayerController가 처음 생성될 때 호출
     /// <param name="manager">나를 관리할 BattleManager</param>
     /// <param name="VisualElement">내가 제어할 UXML의 'PlayerParty' 패널</param>
     /// <param name="maxHP">이 영주의 최대 체력</param>
-    /// 
     public PlayerController(BattleManager manager, VisualElement VisualElement, float maxHP)
     {
         this.m_BattleManager = manager;
@@ -80,15 +81,33 @@ public class PlayerController
 
         // 2. 카드 슬롯(CardSlot1 ~ CardSlot7) 찾기
         Slots.Clear();
+        m_RoleUIContainers.Clear();
+        m_CooldownOverlays.Clear();
+        m_CardImageLayers.Clear();
         for (int i = 0; i < 7; i++)
         {
-            string slotName = "CardSlot" + (i + 1);
-            Slots.Add(m_PlayerParty.Q<VisualElement>(slotName));
+            // UXML에 정의된 이름 (예: "Player_Slot_0")
+            VisualElement slot = m_PlayerParty.Q<VisualElement>("CardSlot" + (i + 1));
+            Slots.Add(slot);
+
+            if (slot != null)
+            {
+                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
+                m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
+                m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
+            }
+            else
+            {
+                Debug.LogError($"[PlayerController] 'CardSlot{i + 1}'을 UXML에서 찾을 수 없습니다!");
+                m_RoleUIContainers.Add(null);
+                m_CooldownOverlays.Add(null);
+            }
         }
 
         // 3. 상태 UI 요소들 찾기
         if (m_StatusPanel != null)
         {
+            m_LordPortrait = m_StatusPanel.Q<VisualElement>("Portrait");
             m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill"); // UXML 이름 확인!
             m_HealthLabel = m_StatusPanel.Q<Label>("HP-label"); // UXML 이름 확인!
             m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill"); // UXML 이름 확인!
@@ -105,6 +124,7 @@ public class PlayerController
             m_BleedStatusLabel = m_StatusPanel.Q<Label>("BleedStatus");
             m_PoisonStatusLabel = m_StatusPanel.Q<Label>("PoisonStatus");
             m_BurnStatusLabel = m_StatusPanel.Q<Label>("BurnStatus");
+            m_HealStatusLabel = m_StatusPanel.Q<Label>("HealStatus");
         }
         else
         {
@@ -137,6 +157,7 @@ public class PlayerController
                     m_Cards[i].ExecuteSkill(); // 카드가 알아서 스킬을 씁니다.
                     m_Cards[i].CurrentCooldown = m_Cards[i].CooldownTime; // 쿨타임 초기화
                 }
+                UpdateCardSlotUI(i);
             }
         }
         // DoT 데미지 타이머 돌리기
@@ -262,6 +283,7 @@ public class PlayerController
     /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용
     public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
     {
+        if (m_BattleManager.IsBattleEnded) return;
         // 1) 0~6번 슬롯 인덱스가 담긴 리스트 생성
         List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
 
@@ -302,9 +324,10 @@ public class PlayerController
         }
     }
 
-    /// 이 영주에게 DoT 중첩 추가
-    public virtual void ApplyLordDoT(StatusEffectType effectType, int stacks)
+    /// 이 영주에게 스탯 중첩 추가
+    public virtual void ApplyLordStatus(StatusEffectType effectType, int stacks)
     {
+        if (m_BattleManager.IsBattleEnded) return;
         switch (effectType)
         {
             case StatusEffectType.Bleed:
@@ -316,14 +339,18 @@ public class PlayerController
             case StatusEffectType.Burn:
                 BurnStacks += stacks;
                 break;
+            case StatusEffectType.Heal:
+                HealStacks += stacks;
+                break;
         }
         UpdateDoTUI(); // UI 업데이트
     }
 
 
-    /// 특정 DoT 중첩을 '일정 수치(정수)'만큼 감소
-    public virtual void ReduceLordDoT(StatusEffectType effectType, int amount)
+    /// 특정 상태 이상 중첩을 '일정 수치(정수)'만큼 감소
+    public virtual void ReduceLordStatus(StatusEffectType effectType, int amount)
     {
+        if (m_BattleManager.IsBattleEnded) return;
         switch (effectType)
         {
             case StatusEffectType.Bleed:
@@ -335,13 +362,17 @@ public class PlayerController
             case StatusEffectType.Burn:
                 BurnStacks = Mathf.Max(0, BurnStacks - amount);
                 break;
+            case StatusEffectType.Heal:
+                HealStacks = Mathf.Max(0, HealStacks - amount);
+                break;
         }
         UpdateDoTUI(); // UI 업데이트
     }
 
-    /// 특정 DoT 중첩을 '일정 퍼센트(%)'만큼 감소
-    public virtual void ReduceLordDoTPercent(StatusEffectType effectType, float percent)
+    /// 특정 상태 이상 중첩을 '일정 퍼센트(%)'만큼 감소
+    public virtual void ReduceLordStatusPercent(StatusEffectType effectType, float percent)
     {
+        if (m_BattleManager.IsBattleEnded) return;
         float clampedPercent = Mathf.Clamp01(percent);
         switch (effectType)
         {
@@ -354,6 +385,9 @@ public class PlayerController
             case StatusEffectType.Burn:
                 BurnStacks = Mathf.FloorToInt(BurnStacks * (1.0f - clampedPercent));
                 break;
+            case StatusEffectType.Heal:
+                HealStacks = Mathf.FloorToInt(HealStacks * (1.0f - clampedPercent));
+                break;
         }
         UpdateDoTUI(); // UI 업데이트
     }
@@ -362,6 +396,7 @@ public class PlayerController
     // '개별' 타이머로 DoT 데미지를 계산 및 적용
     private void ProcessDoTs(float deltaTime)
     {
+        if (m_BattleManager.IsBattleEnded) return;
         // (1) 출혈 (1.5초 틱, 쉴드부터 깎음)
         if (BleedStacks > 0)
         {
@@ -406,6 +441,28 @@ public class PlayerController
                 m_BurnTickTimer = 0.5f; // 0.5초 타이머 초기화
             }
         }
+
+        // (4) 지속 회복 (2초 틱, 체력 회복)
+        if (HealStacks > 0)
+        {
+            m_HealTickTimer -= deltaTime;
+            if (m_HealTickTimer <= 0f)
+            {
+                float healAmount = HealStacks * 1; // (스택당 1 회복)
+                AddHealth(healAmount); // 체력 추가 함수 호출
+                Debug.Log($"[HoT] 지속 회복으로 {healAmount} 회복!");
+                m_HealTickTimer = 2.0f; // 2초 타이머 초기화
+            }
+        }
+    }
+
+    public virtual void AddHealth(float amount)
+    {
+        if (m_BattleManager.IsBattleEnded) return;
+
+        CurrentHP += amount;
+        CurrentHP = Mathf.Clamp(CurrentHP, 0, MaxHP);
+        UpdateHealthUI();
     }
 
     // --- 10. UI 업데이트 함수 ---
@@ -520,36 +577,151 @@ public class PlayerController
                 m_BurnStatusLabel.style.display = DisplayStyle.None;
             }
         }
+
+        // 회복 UI
+        if (m_HealStatusLabel != null)
+        {
+            if (HealStacks > 0)
+            {
+                m_HealStatusLabel.text = $"REGEN : {HealStacks}";
+                m_HealStatusLabel.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                m_HealStatusLabel.style.display = DisplayStyle.None;
+            }
+        }
     }
 
     public virtual void UpdateCardSlotUI(int index)
     {
-        // 1. 인덱스가 유효한지 확인
+        // 1) 인덱스가 유효 여부 확인
         if (index < 0 || index >= 7) return;
 
-        // 2. C# 데이터와 UI 슬롯을 가져옵니다.
+        // 2) C# 데이터 & UI 슬롯 호출
         Card cardData = m_Cards[index];
         VisualElement slotUI = Slots[index];
 
-        if (slotUI == null) return; // UI 슬롯이 없으면 종료
+        if (slotUI == null) return;
 
-        // 3. 카드 데이터에 따라 UI 업데이트
+        // 3. UI 내부 요소 호출
+        VisualElement cooldownOverlay = m_CooldownOverlays[index];
+        VisualElement roleUIContainer = m_RoleUIContainers[index];
+        VisualElement cardImageLayer = m_CardImageLayers[index];
+
+        // 4. 카드 데이터에 따라 UI를 업데이트
         if (cardData != null) 
         {
-            // UXML 슬롯의 배경 이미지를 카드의 이미지로 설정합니다.
-            slotUI.style.backgroundImage = new StyleBackground(cardData.CardImage);
+            // 카드 이미지 적용
+            if (cardImageLayer != null)
+            {
+                cardImageLayer.style.backgroundImage = new StyleBackground(cardData.CardImage);
+            }
 
-            // (나중에 여기에 카드의 쿨타임, 상단 네모 UI를 업데이트하는 코드 추가)
+            // 쿨타임 UI 업데이트
+            if (cooldownOverlay != null)
+            {
+                //카드가 '빙결' 상태인지 먼저 확인
+                if (cardData.IsFrozen())
+                {
+                    cooldownOverlay.style.display = DisplayStyle.Flex;
+                    cooldownOverlay.style.height = Length.Percent(100f);
+                    cooldownOverlay.AddToClassList("cooldown-overlay-frozen");
+                }
+                // 일반 쿨타임 상태인지 확인
+                else if (cardData.CurrentCooldown > 0.01f)
+                {
+                    cooldownOverlay.style.display = DisplayStyle.Flex; // 1. 오버레이를 켠다
+
+                    // '남은 %'만큼 높이를 조절
+                    float percent = cardData.CurrentCooldown / cardData.CooldownTime;
+                    cooldownOverlay.style.height = Length.Percent(percent * 100f);
+
+                    // 빙결 제거
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
+                }
+                // 준비 상태
+                else
+                {
+                    cooldownOverlay.style.display = DisplayStyle.None;
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
+                    cooldownOverlay.style.height = Length.Percent(100f);
+                }
+            }
+                // 역할 UI 업데이트
+            if (roleUIContainer != null)
+            {   
+                roleUIContainer.Clear();
+                // 우선순위에 따라 아이콘을 동적 생성
+                // 우선순위 1: 대미지
+                float currentDamage = cardData.GetCurrentDamage();
+                if (currentDamage > 0) { CreateRoleIcon(roleUIContainer, "role-attacker", currentDamage.ToString()); }
+
+                // 우선순위 2: 상태이상 (출혈)
+                int currentBleed = cardData.GetCurrentBleedStacks();
+                if (currentBleed > 0) { CreateRoleIcon(roleUIContainer, "role-bleed", currentBleed.ToString()); }
+
+                // 우선순위 2: 상태이상 (빙결)
+                float currentFreeze = cardData.GetCurrentFreezeDuration();
+                if (currentFreeze > 0) { CreateRoleIcon(roleUIContainer, "role-freeze", currentFreeze.ToString()); }
+
+                // 우선순위 3: 쉴드
+                float currentShield = cardData.GetCurrentShield();
+                if (currentShield > 0) { CreateRoleIcon(roleUIContainer, "role-tanker", currentShield.ToString()); }
+
+                // 우선순위 4: 힐
+                float currentHeal = cardData.GetCurrentHeal();
+                if (currentHeal > 0) { CreateRoleIcon(roleUIContainer, "role-healer", currentHeal.ToString()); }
+
+                // 우선순위 5: 지속 힐
+                int currentHealStacks = cardData.GetCurrentHealStacks();
+                if (currentHealStacks > 0) { CreateRoleIcon(roleUIContainer, "role-heal-dot", currentHealStacks.ToString()); }
+            }
         }
         else // 슬롯이 비어있다면
         {
-            // 배경 이미지를 '없음(null)'으로 설정하여 투명하게 만듭니다.
-            slotUI.style.backgroundImage = null;
+            // 배경 이미지를 null로 설정
+            if (cardImageLayer != null)
+            {
+                cardImageLayer.style.backgroundImage = null;
+            }
 
-            // (나중에 쿨타임 UI, 상단 네모 UI를 숨기는 코드 추가)
+            // 쿨타임/역할 UI도 모두 숨김
+            if (cooldownOverlay != null) cooldownOverlay.style.display = DisplayStyle.None;
+            if (roleUIContainer != null) roleUIContainer.Clear();
         }
     }
 
+    // 역할 아이콘 동적 생성
+    private void CreateRoleIcon(VisualElement container, string roleClass, string valueText)
+    {
+        // 1) 아이콘 생성
+        VisualElement icon = new VisualElement();
+        icon.AddToClassList("card-role-icon"); // 공통 스타일 
+        icon.AddToClassList(roleClass); // 개별 색상 스타일
+
+        // 2) 텍스트 라벨(Label) 생성
+        Label label = new Label(valueText);
+        label.AddToClassList("card-role-label"); 
+
+        // 3) 네모 안에 텍스트를 넣고, 컨테이너에 네모를 추가
+        icon.Add(label); // 텍스트 추가
+        container.Add(icon); // 아이콘 추가
+    }
+
+    public virtual void CleanupBattleUI()
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] != null) // 슬롯에 카드가 있다면
+            {
+                m_Cards[i].ClearBattleStatBuffs(); // 스탯 초기화
+                m_Cards[i].ClearBattleFrozen(); // 빙결 초기화
+                m_Cards[i].CurrentCooldown = 0f; // 쿨타임 초기화
+                UpdateCardSlotUI(i); // UI 갱신
+            }
+        }
+    }
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------

@@ -14,6 +14,7 @@ public class Lord_SevereCold_Controller : PlayerController
     /// public { get; ... } : 다른 스크립트가 이 값을 읽을 수 있게 함
     /// private set; : 이 값은 오직 이 스크립트 안에서만 수정 가능
     public bool IsEnraged { get; private set; } = false;
+    private bool m_WasEnragedLastFrame = false;
 
 
     // --- 2. 생성자 ---
@@ -29,6 +30,7 @@ public class Lord_SevereCold_Controller : PlayerController
     {
         // (이곳은 '혹한의 성주'만의 초기화 코드를 위한 공간. 추후 로직 추가.)
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 생성 완료. '격노' 시스템 활성화.");
+        UpdateEnrageVisuals(false);
     }
 
 
@@ -45,15 +47,40 @@ public class Lord_SevereCold_Controller : PlayerController
         // 2. '혹한의 성주'만의 '격노' 상태를 매 프레임 검사
         IsEnraged = (CurrentHP < (MaxHP * 0.5f));
 
-        // (참고) 격노 상태일 때 UI 이펙트를 추가하고 싶다면, 이곳에서 제어 가능. 추후 논의
-        // if (IsEnraged) { m_PartyPanel.style.backgroundColor = Color.red; }
-        // else { m_PartyPanel.style.backgroundColor = Color.clear; }
+        // 격노 상태일 때 UI 이펙트를 추가하고 싶다면, 이곳에서 제어 가능. 추후 논의
+        if (m_WasEnragedLastFrame != IsEnraged)
+        {
+            UpdateEnrageVisuals(IsEnraged);
+            m_WasEnragedLastFrame = IsEnraged; // 현재 상태를 '이전 상태'로 저장
+        }
     }
 
-    /// PlayerController의 '프로토타입용 덱 설정' 함수를 override
-    /// <param name="cardNames">BattleManager로부터 전달받은 덱 정보 (지금은 null)</param>
+    private void UpdateEnrageVisuals(bool isEnraged)
+    {
+        // (부모의 m_LordPortrait 변수를 사용합니다)
+        if (m_LordPortrait == null) return; // UI가 없으면 종료
 
+        if (isEnraged)
+        {
+            // 격노 상태 켜기
+            m_LordPortrait.AddToClassList("lord-portrait-enraged");
+        }
+        else
+        {
+            // 격노 상태 끄기
+            m_LordPortrait.RemoveFromClassList("lord-portrait-enraged");
+        }
+    }
 
+    public override void CleanupBattleUI()
+    {
+        base.CleanupBattleUI();
+
+        // '혹한의 성주'만의 '격노' 상태 초기화
+        IsEnraged = false;
+        m_WasEnragedLastFrame = false; 
+        UpdateEnrageVisuals(false);
+    }
 
 
 
@@ -67,6 +94,22 @@ public class Lord_SevereCold_Controller : PlayerController
 
         m_Cards[1] = new Card_Shieldbearer(this, 1);
         UpdateCardSlotUI(1);
+
+        m_Cards[2] = new Card_Bloodletter(this, 2);     // 출혈 카드
+        UpdateCardSlotUI(2);
+
+        m_Cards[3] = new Card_Healer(this, 3);          // 즉발 힐 카드
+        UpdateCardSlotUI(3);
+
+        m_Cards[4] = new Card_Regenerator(this, 4);     // 지속 힐 카드
+        UpdateCardSlotUI(4);
+
+        m_Cards[5] = new Card_FrostFowl(this, 5);     // 빙결 카드
+        UpdateCardSlotUI(5);
+
+        m_Cards[6] = new Card_FuriousWarrior(this, 6);     // 빙결 카드
+        UpdateCardSlotUI(6);
+
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 혹한의 성주 전용 덱 설정 완료.");
 
         // 쿨타임 초기화

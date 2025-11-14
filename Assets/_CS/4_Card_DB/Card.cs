@@ -11,27 +11,53 @@ public abstract class Card
     public Sprite CardImage { get; protected set; } // 카드 이미지
     public CardRarity Rarity { get; protected set; } // 카드 등급
     public float CooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
+    public float CurrentCooldown { get; set; } // 현재 남은 쿨타임. 0이 되면 스킬 발동
+    protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
+    public int SlotIndex { get; private set; } // 카드가 몇 번 슬롯에 있는지
 
-    /// 현재 남은 쿨타임. 0이 되면 스킬 발동
-    public float CurrentCooldown { get; set; }
+    // 역할 UI - [기본]
+    public float BaseDamage { get; protected set; } = 0;   // 
+    public float BaseShield { get; protected set; } = 0;   // 
+    public float BaseHeal { get; protected set; } = 0;     // 
+    public int HealStacksToApply { get; protected set; } = 0;
 
-    /// 이 카드를 소유하고 관리하는 '주인' (플레이어 또는 몬스터)
-    protected object m_Owner;
+    public virtual float GetCurrentDamage() { return this.BaseDamage; }
+    public virtual float GetCurrentShield() { return this.BaseShield; }
+    public virtual float GetCurrentHeal() { return this.BaseHeal; }
 
-    /// 카드가 몇 번 슬롯에 있는지
-    public int SlotIndex { get; private set; }
+    // 역할 UI - [상태 이상]
+    public int BleedStacksToApply { get; protected set; } = 0;    // 
+    public float FreezeDurationToApply { get; protected set; } = 0; // 
+    
+
+    public virtual int GetCurrentBleedStacks() { return this.BleedStacksToApply; }
+    public virtual float GetCurrentFreezeDuration() { return this.FreezeDurationToApply; }
+    public virtual int GetCurrentHealStacks() { return this.HealStacksToApply; }
 
     // -------------------
     // --- [상태 이상] ---
-    // -------------------
     public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>();
     private bool m_IsFrozen = false;
     private float m_FreezeTimer = 0f;
 
+    public virtual void ClearBattleStatBuffs()
+    {
+    }
 
-    // --- [태그] ---
+    public bool IsFrozen()
+    {
+        return m_IsFrozen;
+    }
+    public virtual void ClearBattleFrozen()
+    {
+        // 빙결 상태를 강제로 해제합니다.
+        m_IsFrozen = false;
+        m_FreezeTimer = 0f;
+    }
+
+    // ----- [태그] -----
     public List<string> Tags { get; protected set; } = new List<string>();
-
+    // -------------------
 
     // --- 2. 생성자 (카드 처음 생성 시) ---
 
@@ -56,20 +82,12 @@ public abstract class Card
     }
 
     // --- 3. 핵심 함수 ---
-
-    /// [핵심 추상 함수]
     /// 카드의 고유 스킬 로직
-    /// 이 클래스를 상속받는 모든 카드는, 이 함수의 내용물을 반드시' 자신만의 로직으로 덮어써야(override) 합니다.
-
+    /// 이 클래스를 상속받는 모든 카드는, 이 함수의 내용물을 반드시' 자신만의 로직으로 override 돼야 함.
     public abstract void ExecuteSkill();
 
-
-
-    /// [공통 함수]
     /// BattleManager가 매 프레임 호출하여 쿨타임을 줄여주는 함수
-    /// virtual: 자식 클래스에서 이 함수를 수정(override)할 수도 있습니다.
     /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
- 
     public virtual void UpdateCooldown(float deltaTime)
     {
         // '빙결' 상태라면, 쿨타임을 줄이지 않고 빙결 시간만 줄입니다.

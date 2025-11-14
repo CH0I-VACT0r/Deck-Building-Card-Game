@@ -19,7 +19,7 @@ public class BattleManager : MonoBehaviour
 
     // --- 3. 전투 상태 ---
     private bool m_IsBattleEnded = false;
-
+    public bool IsBattleEnded { get { return m_IsBattleEnded; } }
 
     // --- 4. Unity 수명 주기 함수 ---
     /// 이 스크립트가 활성화될 때 (게임 시작 시) 호출됩니다
@@ -67,7 +67,11 @@ public class BattleManager : MonoBehaviour
 
     public void EndBattle(string winner)
     {
+        if (m_IsBattleEnded) return;
         m_IsBattleEnded = true; // Update 루프 정지
+
+        playerController.CleanupBattleUI();
+        monsterController.CleanupBattleUI();
 
         if (winner == "Player")
         {

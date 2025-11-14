@@ -18,6 +18,7 @@ public class Card_Shieldbearer : Card // [핵심!] Card 뼈대를 상속
         // 1. 기본 정보 설정
         this.CardName = "피의 서약 방패병";
         this.Rarity = CardRarity.Silver; // (핵심 카드이므로 실버로 설정)
+        this.BaseShield = 20f;
 
         // 2. 이미지 로드 (Resources/CardImages/shieldbearer_art.png 파일이 있다고 가정)
         this.CardImage = Resources.Load<Sprite>("CardImages/Lord_SevereCold/Barbarian_Shieldbearer"); 
@@ -25,6 +26,24 @@ public class Card_Shieldbearer : Card // [핵심!] Card 뼈대를 상속
         // 3. [Tag 설정]
         this.Tags.Add("#야만전사");
         this.Tags.Add("#탱커");
+    }
+
+    public override float GetCurrentShield()
+    {
+        // 1. 주인을 PlayerController로 '형 변환' (안전하게)
+        PlayerController playerOwner = m_Owner as PlayerController;
+        if (playerOwner == null) return this.BaseShield; // (주인 없으면 기본값)
+
+        // 2. 주인이 '혹한의 성주'인지 확인
+        Lord_SevereCold_Controller coldLord = playerOwner as Lord_SevereCold_Controller;
+        if (coldLord != null && coldLord.IsEnraged)
+        {
+            // [격노!] "UI에 45라고 표시해!"
+            return m_EnragedShield;
+        }
+
+        // 3. '격노'가 아니면, 부모에 저장된 기본값(20)을 반환
+        return this.BaseShield;
     }
 
     // --- 3. 핵심 스킬 로직 ---

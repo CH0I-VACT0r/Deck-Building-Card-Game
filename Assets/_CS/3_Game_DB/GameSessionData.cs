@@ -18,4 +18,10 @@ public static class GameSessionData
 
     // public static int PlayerFame = 0;
     // public static int PlayerGold = 15;
+
+
+
+    // ------- 기타 -------
+    // '카드 이름'을 Key로, '영구 보너스 스탯'을 Value로 저장
+    // public static Dictionary<string, float> PermanentCardBuffs = new Dictionary<string, float>();
 }

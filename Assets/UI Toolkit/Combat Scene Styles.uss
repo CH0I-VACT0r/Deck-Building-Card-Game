@@ -19,6 +19,15 @@ VisualElement {
     border-top-width: 1px;
     border-bottom-width: 1px;
     border-color: rgb(34, 34, 34);
+    margin-left: 5px
+}
+
+.card-image-background {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
 }
 
 .MonsterPartyPanel {
@@ -53,7 +62,7 @@ VisualElement {
 }
 
 .MonsterStatusPanel {
-    top: 2.5%
+    top: 2.5%;
 }
 
 .Portrait {
@@ -71,7 +80,6 @@ VisualElement {
     flex-grow: 1;
     min-width: 1000px;
     justify-content: flex-start;
-
     padding-bottom: 10px;
     padding-top: 10px;
 }
@@ -81,7 +89,6 @@ VisualElement {
     flex-grow: 1;
     min-width: 1000px;
     justify-content: flex-start;
-
     padding-bottom: 10px;
     padding-top: 10px;
 }
@@ -95,32 +102,25 @@ VisualElement {
 }
 
 .xp-bar {
-    height: 40px; /* 얇은 XP 바 */
-    
-    /* 겹치는 대신 '가로 정렬'로 변경 */
+    height: 40px;
     flex-direction: row;
-    /* 라벨과 네모칸들을 세로 중앙에 정렬 */
-    align-items: center; 
-    
-    /* 라벨과 네모칸들 사이의 간격 */
-    justify-content: space-between; 
-    
-    /* 바 좌우에 여백 추가 */
+    align-items: center;
+    justify-content: space-between;
     padding-left: 10px;
 }
 
 .hp-bar {
     height: 65px;
     margin-top: 10px;
-    border-width: 2px; /* 외곽선 두께 */
-    border-color: #000000;
+    border-width: 2px;
+    border-color: rgb(0, 0, 0);
 }
 
 .shield-bar {
     height: 50px;
     margin-top: 10px;
-    border-width: 2px; /* 외곽선 두께 */
-    border-color: #000000;
+    border-width: 2px;
+    border-color: rgb(0, 0, 0);
 }
 
 .bar-label {
@@ -140,9 +140,7 @@ VisualElement {
     color: white;
     -unity-font-style: bold;
     font-size: 16px;
-    
-    flex-shrink: 0; 
-    
+    flex-shrink: 0;
     margin-right: 10px;
 }
 
@@ -165,64 +163,147 @@ VisualElement {
 }
 
 .xp-ticks-container {
-    flex-direction: row; /* 네모들을 가로로 정렬 */
+    flex-direction: row;
     margin-left: 50px;
 }
 
 .xp-tick {
-    /* (예시) 20x20 크기의 네모 */
     width: 20px;
     height: 20px;
-    
-    /* 네모 사이의 간격 */
-    margin-left: 3px; 
-    
-    /* (기본) 비어있는 칸 색상 */
-    background-color: #555; 
+    margin-left: 3px;
+    background-color: rgb(85, 85, 85);
     border-radius: 3px;
     border-width: 1px;
-    border-color: #AAA;
+    border-color: rgb(170, 170, 170);
 }
 
-/* [신규!] C# 스크립트가 추가할 '채워진' 칸 스타일 */
 .xp-tick-filled {
-    background-color: #00A2FF; /* 파란색 */
-    border-color: #FFF;
+    background-color: rgb(0, 162, 255);
+    border-color: rgb(255, 255, 255);
 }
 
-/* 아이콘들을 담는 컨테이너 */
 .status-effect-container {
-    flex-direction: row; /* 아이콘을 가로로 나열 */
-    
-    /* 체력 바의 '오른쪽 위'에 겹쳐서 배치 */
+    flex-direction: row;
     position: absolute;
     top: 5px;
-    right: 5px; 
+    right: 5px;
 }
 
-/* 개별 아이콘(라벨)의 공통 스타일 */
 .status-effect-icon {
     -unity-font-style: bold;
     font-size: 14px;
-    
-    /* 아이콘끼리 살짝 간격 띄우기 */
-    margin-left: 5px; 
-    
-    /* (디자인) 보기 좋게 배경과 테두리 추가 */
+    margin-left: 5px;
     padding: 2px 5px;
     background-color: rgba(0, 0, 0, 0.7);
     border-radius: 2px;
 }
 
-/* --- 상태 이상별 고유 색상 --- */
 .bleed-status {
-    color: #FF4136; /* 핏빛 (새빨간색) */
+    color: rgb(255, 65, 54);
 }
 
 .poison-status {
-    color: #8E44AD; /* 독 (초록색) */
+    color: rgb(142, 68, 173);
 }
 
 .burn-status {
-    color: #FF851B; /* 화상 (주황색) */
+    color: rgb(255, 133, 27);
+}
+
+.card-cooldown-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    background-color: rgba(50, 50, 50, 0.7);
+}
+
+.card-role-ui-container {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    translate: -50% 0;
+    width: 120px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card-role-icon {
+    width: 50px;
+    height: 20px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5);
+    margin: 2px 2.5px;
+    display: flex;
+}
+
+.card-role-label {
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: white;
+    font-size: 15px;
+   -unity-text-outline-width: 1px;
+   -unity-text-outline-color: black;
+}
+
+.role-attacker {
+    background-color: rgb(255, 65, 54);
+    border-color: black;
+}
+
+.role-tanker {
+    background-color: rgb(240, 185, 11);
+    border-color: black;
+}
+
+.role-healer {
+    background-color: rgb(46, 204, 113);
+    border-color: black;
+}
+
+.role-bleed {
+    background-color: rgb(220, 20, 60);
+    border-color: black;
+}
+
+.role-freeze {
+    background-color: rgb(0, 116, 217);
+    border-color: black;
+}
+
+
+.buff-effect-container {
+    flex-direction: row; /* 아이콘을 가로로 나열 */
+    
+    /* [위치] 체력 바의 '왼쪽 위'에 겹쳐서 배치 */
+    position: absolute;
+    top: 5px;
+    left: 5px; 
+}
+
+.heal-status {
+    color: #39CCCC; /* 밝은 청록색 (힐링 느낌) */
+}
+
+.role-heal-dot {
+    background-color: #39CCCC; /* 밝은 청록색 (HoT) */
+    border-color: black;
+}
+
+.cooldown-overlay-frozen {
+    background-color: rgba(0, 116, 217, 0.7); /* #0074D9의 반투명 버전 */
+    border-width: 1px;
+    border-color: #7FDBFF; /* 밝은 파란색 테두리 */
+}
+
+.lord-portrait-enraged {
+    /* 핏빛 붉은색 배경 및 테두리*/
+    background-color: rgba(220, 20, 60, 0.8); /* #DC143C (Crimson) */
+    border-color: #FF4136; 
+    
+    /* (선택) 부드럽게 색이 변하는 효과 */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }

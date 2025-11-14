@@ -19,6 +19,7 @@ public class Card_BarbarianWarrior : Card // [핵심!] Card 뼈대를 상속
         // 1. 기본 정보 설정
         this.CardName = "바바리안 전투병";
         this.Rarity = CardRarity.Bronze; // [등급]
+        this.BaseDamage = 20f;
 
         // 2. 이미지 로드 (Resources/CardImages/barbarian_warrior.png 파일이 있다고 가정)
         this.CardImage = Resources.Load<Sprite>("CardImages/Lord_SevereCold/Barbarian_Warrior"); 

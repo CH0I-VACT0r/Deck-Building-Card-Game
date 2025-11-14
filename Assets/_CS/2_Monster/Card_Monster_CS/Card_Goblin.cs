@@ -12,10 +12,7 @@ public class Card_Goblin : Card // Card 뼈대를 상속
     private const float COOLDOWN = 6f;
 
     // --- 2. 생성자 ---
-    /// <summary>
     /// '고블린' 카드가 생성될 때 호출됩니다.
-    /// [중요!] 몬스터 카드는 'MonsterController'를 주인으로 받습니다.
-    /// </summary>
     /// <param name="owner">나를 소유한 MonsterController</param>
     /// <param name="index">내가 배치된 슬롯 인덱스 (0~6)</param>
     public Card_Goblin(MonsterController owner, int index)
@@ -24,6 +21,7 @@ public class Card_Goblin : Card // Card 뼈대를 상속
         // 1. 기본 정보 설정
         this.CardName = "고블린 돌격병";
         this.Rarity = CardRarity.Bronze;
+        this.BaseDamage = 20f;
 
         // 2. 이미지 로드 (Resources/CardImages/goblin_art.png 파일이 있다고 가정)
         this.CardImage = Resources.Load<Sprite>("CardImages/Monster/Goblin"); 
