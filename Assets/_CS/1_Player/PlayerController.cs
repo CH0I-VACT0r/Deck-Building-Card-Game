@@ -91,7 +91,7 @@ public class PlayerController
         {
             m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill"); // UXML 이름 확인!
             m_HealthLabel = m_StatusPanel.Q<Label>("HP-label"); // UXML 이름 확인!
-            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar-Fill"); // UXML 이름 확인!
+            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill"); // UXML 이름 확인!
             m_ShieldLabel = m_StatusPanel.Q<Label>("Shield-label"); // UXML 이름 확인!
             m_LevelLabel = m_StatusPanel.Q<Label>("LV-label"); // UXML 이름 확인!
 
@@ -259,7 +259,7 @@ public class PlayerController
     }
 
     // --- 8. 상태 이상 헬퍼 함수 ---
-    /// [핵심] 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용
+    /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용
     public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
     {
         // 1) 0~6번 슬롯 인덱스가 담긴 리스트 생성
@@ -421,13 +421,13 @@ public class PlayerController
         // 체력 텍스트(Label)
         if (m_HealthLabel != null)
         {
-            m_HealthLabel.text = $"HP: {Mathf.CeilToInt(CurrentHP)} / {MaxHP}";
+            m_HealthLabel.text = $"{Mathf.CeilToInt(CurrentHP)}";
         }
 
         // 쉴드 텍스트(Label)
         if (m_ShieldLabel != null)
         {
-            m_ShieldLabel.text = $"SHIELD: {Mathf.CeilToInt(CurrentShield)}";
+            m_ShieldLabel.text = $"{Mathf.CeilToInt(CurrentShield)}";
         }
 
         // 쉴드 바(Fill)

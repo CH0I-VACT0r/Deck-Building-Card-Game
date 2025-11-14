@@ -62,9 +62,11 @@ public class Lord_SevereCold_Controller : PlayerController
     // '혹한의 성주' 덱을 생성
     public override void SetupDeck(string[] cardNames)
     {
-
         m_Cards[0] = new Card_BarbarianWarrior(this, 0);
         UpdateCardSlotUI(0);
+
+        m_Cards[1] = new Card_Shieldbearer(this, 1);
+        UpdateCardSlotUI(1);
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 혹한의 성주 전용 덱 설정 완료.");
 
         // 쿨타임 초기화

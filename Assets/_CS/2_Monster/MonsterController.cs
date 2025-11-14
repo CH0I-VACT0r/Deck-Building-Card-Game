@@ -380,12 +380,12 @@ public class MonsterController
 
         if (m_HealthLabel != null)
         {
-            m_HealthLabel.text = $"HP: {Mathf.CeilToInt(CurrentHP)} / {MaxHP}";
+            m_HealthLabel.text = $"{Mathf.CeilToInt(CurrentHP)}";
         }
 
         if (m_ShieldLabel != null)
         {
-            m_ShieldLabel.text = $"SHIELD: {Mathf.CeilToInt(CurrentShield)}";
+            m_ShieldLabel.text = $"{Mathf.CeilToInt(CurrentShield)}";
         }
 
         if (m_ShieldBarFill != null)
@@ -487,11 +487,9 @@ public class MonsterController
     public virtual void SetupDeck(string[] cardNames)
     {
         // (프로토타입용 하드코딩)
-        // 'this'는 "MonsterController 자신"을 의미합니다.
-        // Card.cs를 상속받은 Card_Monster.cs가 있다고 가정
+        m_Cards[3] = new Card_Goblin(this, 3);
+        UpdateCardSlotUI(3);
 
-        // m_Cards[1] = new Card_Monster(this); // 2번 슬롯에 몬스터 생성
-
-        // (쿨타임 초기화 로직...)
+        Debug.Log("[MonsterController] 테스트용 몬스터 덱([고블린]) 설정 완료.");
     }
 }
