@@ -154,7 +154,7 @@ VisualElement {
 }
 
 .hp-bar-fill {
-    background-color: rgb(46, 204, 113);
+    background-color: #009000;
 }
 
 .shield-bar-fill {
@@ -260,12 +260,12 @@ VisualElement {
 }
 
 .role-healer {
-    background-color: rgb(46, 204, 113);
+    background-color: #008000;
     border-color: black;
 }
 
 .role-bleed {
-    background-color: rgb(220, 20, 60);
+    background-color: #800000;
     border-color: black;
 }
 
@@ -285,11 +285,11 @@ VisualElement {
 }
 
 .heal-status {
-    color: #39CCCC; /* 밝은 청록색 (힐링 느낌) */
+    color: #95BE42; /* 밝은 청록색 (힐링 느낌) */
 }
 
 .role-heal-dot {
-    background-color: #39CCCC; /* 밝은 청록색 (HoT) */
+    background-color: #95BE42; /* 밝은 청록색 (HoT) */
     border-color: black;
 }
 
@@ -301,8 +301,8 @@ VisualElement {
 
 .lord-portrait-enraged {
     /* 핏빛 붉은색 배경 및 테두리*/
-    background-color: rgba(220, 20, 60, 0.8); /* #DC143C (Crimson) */
-    border-color: #FF4136; 
+    background-color: #800000; /* #DC143C (Crimson) */
+    border-color: #800000; 
     
     /* (선택) 부드럽게 색이 변하는 효과 */
     transition: background-color 0.3s ease, border-color 0.3s ease;
