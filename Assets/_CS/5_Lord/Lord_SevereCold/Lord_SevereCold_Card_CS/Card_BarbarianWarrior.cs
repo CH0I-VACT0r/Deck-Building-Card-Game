@@ -40,10 +40,13 @@ public class Card_BarbarianWarrior : Card // [핵심!] Card 뼈대를 상속
         MonsterController target = playerOwner.GetTarget();
         if (target == null) return;
 
-        // 3. 타겟의 '본체'에 피해를 줍니다.
-        target.TakeDamage(m_Damage);
+        // 3. 스킬 배율을 계산 (크리티컬 확인 로직)
+        float critMultiplier = CheckForCrit(); // (치명타 터지면 2.0f, 아니면 1.0f)
 
-        // 4. (디버그 로그)
+        // 4. 스킬 수치 * 배율
+        float damageToDeal = this.BaseDamage * critMultiplier;
+
+        // 5. (디버그 로그)
         Debug.Log($"[{this.CardName}] (슬롯 {this.SlotIndex}) 스킬! -> 몬스터에게 {m_Damage} 피해");
     }
 }

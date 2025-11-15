@@ -224,4 +224,26 @@ public abstract class Card
             CurrentCooldown += amount;
         }
     }
+
+    // 내구도 시스템
+    protected virtual void ConsumeDurability()
+    {
+        // 내구도 무한
+        if (this.Durability == -1) return;
+
+        this.Durability--;
+
+        if (this.Durability <= 0)
+        {
+            // 파괴
+            if (m_Owner is PlayerController playerOwner)
+            {
+                playerOwner.DestroyCard(this.SlotIndex);
+            }
+            else if (m_Owner is MonsterController monsterOwner)
+            {
+                monsterOwner.DestroyCard(this.SlotIndex);
+            }
+        }
+    }
 }
