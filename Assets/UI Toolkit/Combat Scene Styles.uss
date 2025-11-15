@@ -268,7 +268,15 @@ VisualElement {
     background-color: #800000;
     border-color: black;
 }
+.role-poison {
+    background-color: #8E44AD; 
+    border-color: black;
+}
 
+.role-burn {
+    background-color: #FF851B;
+    border-color: black;
+}
 .role-freeze {
     background-color: rgb(0, 116, 217);
     border-color: black;
@@ -299,11 +307,23 @@ VisualElement {
     border-color: #7FDBFF; /* 밝은 파란색 테두리 */
 }
 
+.cooldown-overlay-hasted {
+    /* (예시) 밝은 초록색 */
+    background-color: rgba(200, 248, 248, 0.7); /* #2ECC71 */
+    border-width: 1px;
+    border-color: #90D4EB;
+}
+
+.cooldown-overlay-slowed {
+    background-color: #D2691E; /* #D2691E (Chocolate) */
+    border-width: 1px;
+    border-color: #D2691E;
+}
+
 .lord-portrait-enraged {
-    /* 핏빛 붉은색 배경 및 테두리*/
     background-color: #800000; /* #DC143C (Crimson) */
     border-color: #800000; 
     
-    /* (선택) 부드럽게 색이 변하는 효과 */
+    /* 부드럽게 색이 변하는 효과 */
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }

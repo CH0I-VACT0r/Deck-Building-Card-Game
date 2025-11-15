@@ -14,45 +14,74 @@ public abstract class Card
     public float CurrentCooldown { get; set; } // 현재 남은 쿨타임. 0이 되면 스킬 발동
     protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
     public int SlotIndex { get; private set; } // 카드가 몇 번 슬롯에 있는지
+    public int Durability { get; protected set; } = -1; // 내구도
 
     // 역할 UI - [기본]
-    public float BaseDamage { get; protected set; } = 0;   // 
-    public float BaseShield { get; protected set; } = 0;   // 
-    public float BaseHeal { get; protected set; } = 0;     // 
-    public int HealStacksToApply { get; protected set; } = 0;
+    public float BaseDamage { get; protected set; } = 0;   // 기본 대미지
+    public float BaseShield { get; protected set; } = 0;   // 기본 쉴드
+    public float BaseHeal { get; protected set; } = 0;     // 기본 회복
+    public int HealStacksToApply { get; protected set; } = 0; // 지속 회복
+    public float BaseCritChance { get; protected set; } = 0f; // 치명타 확률
 
-    public virtual float GetCurrentDamage() { return this.BaseDamage; }
-    public virtual float GetCurrentShield() { return this.BaseShield; }
-    public virtual float GetCurrentHeal() { return this.BaseHeal; }
+    public virtual float GetCurrentDamage() { return this.BaseDamage; } // 대미지
+    public virtual float GetCurrentShield() { return this.BaseShield; } // 쉴드
+    public virtual float GetCurrentHeal() { return this.BaseHeal; } // 회복
+    public virtual int GetCurrentHealStacks() { return this.HealStacksToApply; } // 지속 회복
+    public virtual float GetCurrentCritChance() { return this.BaseCritChance; } // 치명타 확률
 
     // 역할 UI - [상태 이상]
-    public int BleedStacksToApply { get; protected set; } = 0;    // 
-    public float FreezeDurationToApply { get; protected set; } = 0; // 
-    
+    public int BleedStacksToApply { get; protected set; } = 0;    // 출혈 적용
+    public float FreezeDurationToApply { get; protected set; } = 0; // 빙결 적용
+    public int PoisonStacksToApply { get; protected set; } = 0; // 중독 적용
+    public int BurnStacksToApply { get; protected set; } = 0; // 화상 적용
+
 
     public virtual int GetCurrentBleedStacks() { return this.BleedStacksToApply; }
     public virtual float GetCurrentFreezeDuration() { return this.FreezeDurationToApply; }
-    public virtual int GetCurrentHealStacks() { return this.HealStacksToApply; }
+    public virtual int GetCurrentPoisonStacks() { return this.PoisonStacksToApply; } // [신규!]
+    public virtual int GetCurrentBurnStacks() { return this.BurnStacksToApply; }
 
-    // -------------------
-    // --- [상태 이상] ---
-    public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>();
-    private bool m_IsFrozen = false;
-    private float m_FreezeTimer = 0f;
-
-    public virtual void ClearBattleStatBuffs()
-    {
-    }
+    // --- [상태 이상 컨트롤] ---
+    public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>(); // 면역
+    private bool m_IsFrozen = false; // 빙결 여부
+    private float m_FreezeTimer = 0f; // 빙결 타이머
+    private bool m_IsHasted = false; // 가속 여부
+    private float m_HasteTimer = 0f; // 가속 타이머
+    private bool m_IsSlowed = false; // 감속 여부
+    private float m_SlowTimer = 0f; // 감속 타이머
 
     public bool IsFrozen()
     {
         return m_IsFrozen;
     }
-    public virtual void ClearBattleFrozen()
+    public bool IsHasted()
+    {
+        return m_IsHasted;
+    }
+    public bool IsSlowed()
+    {
+        return m_IsSlowed;
+    }
+
+    public virtual void ClearBattleFrozen() // 어디서 쓰는 지 몰라서 일단 남겨둠
     {
         // 빙결 상태를 강제로 해제합니다.
         m_IsFrozen = false;
         m_FreezeTimer = 0f;
+    }
+
+    public virtual void ClearStatusEffects() // 전투 종료 시 외부 상태 이상 초기화
+    {
+        m_IsFrozen = false;
+        m_FreezeTimer = 0f;
+        m_IsHasted = false;
+        m_HasteTimer = 0f;
+        m_IsSlowed = false;
+        m_SlowTimer = 0f;
+    }
+
+    public virtual void ClearBattleStatBuffs()
+    {
     }
 
     // ----- [태그] -----
@@ -82,37 +111,61 @@ public abstract class Card
     }
 
     // --- 3. 핵심 함수 ---
-    /// 카드의 고유 스킬 로직
-    /// 이 클래스를 상속받는 모든 카드는, 이 함수의 내용물을 반드시' 자신만의 로직으로 override 돼야 함.
+    // 카드의 고유 스킬 로직 : 이 클래스를 상속받는 모든 카드는, 이 함수의 내용물을 반드시' 자신만의 로직으로 override 돼야 함.
     public abstract void ExecuteSkill();
 
+    // 크리티컬 확인
+    protected float CheckForCrit()
+    {
+        float currentCritChance = GetCurrentCritChance();
+        if (currentCritChance <= 0) return 1.0f;
+
+        if (Random.Range(0f, 1.0f) < currentCritChance)
+        {
+            Debug.Log($"[{this.CardName}] 치명타 발동!");
+            return 2.0f; // 2배
+        }
+        return 1.0f; // 1배
+    }
+
     /// BattleManager가 매 프레임 호출하여 쿨타임을 줄여주는 함수
-    /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
     public virtual void UpdateCooldown(float deltaTime)
     {
-        // '빙결' 상태라면, 쿨타임을 줄이지 않고 빙결 시간만 줄입니다.
+        // 1. 빙결 체크
         if (m_IsFrozen)
         {
             m_FreezeTimer -= deltaTime;
-            if (m_FreezeTimer <= 0)
-            {
-                m_IsFrozen = false;
-                Debug.Log($"[{this.CardName}] (이)가 빙결에서 풀려났습니다!");
-            }
-            return; // [핵심!] 쿨타임 감소 로직을 실행하지 않고 건너뜀!
+            if (m_FreezeTimer <= 0) m_IsFrozen = false;
+            return; // 쿨타임 감소 X
         }
 
+        // 2. 가속/감속 적용된 
+        float modifiedDeltaTime = deltaTime;
+
+        if (m_IsHasted)
+        {
+            modifiedDeltaTime *= 2.0f; // 2배 가속
+            m_HasteTimer -= deltaTime;
+            if (m_HasteTimer <= 0) m_IsHasted = false;
+        }
+        else if (m_IsSlowed) // (가속과 감속은 중복 안 됨)
+        {
+            modifiedDeltaTime *= 0.5f; // 2배 느리게!
+            m_SlowTimer -= deltaTime;
+            if (m_SlowTimer <= 0) m_IsSlowed = false;
+        }
+
+        // 3. (기존 로직) 쿨타임 감소
         if (CurrentCooldown > 0)
         {
-            CurrentCooldown -= deltaTime;
+            CurrentCooldown -= modifiedDeltaTime; // '수정된 시간'으로 쿨타임 감소
         }
     }
 
-    /// 외부에서 이 카드에게 상태 이상을 적용하는 함수
-    /// <returns>면역이면 false, 적용되면 true를 반환합니다.</returns>
+    /// 외부에서 이 카드에게 상태 이상을 적용하는 함수 : <returns>면역이면 false, 적용되면 true를 반환 
     public virtual bool ApplyStatusEffect(StatusEffectType effectType, float duration)
     {
-        // 1. 면역인지 체크
+        // 면역 체크
         if (Immunities.Contains(effectType))
         {
             Debug.Log($"[{this.CardName}] (은)는 '{effectType}' 효과에 면역입니다!");
@@ -124,10 +177,51 @@ public abstract class Card
         {
             case StatusEffectType.Freeze:
                 m_IsFrozen = true;
-                m_FreezeTimer = duration;
+                m_FreezeTimer = Mathf.Max(m_FreezeTimer, duration); // 더 긴 시간으로 갱신
                 Debug.Log($"[{this.CardName}] (이)가 {duration}초간 빙결되었습니다!");
                 break;
+
+            case StatusEffectType.Haste:
+                m_IsHasted = true;
+                m_HasteTimer = Mathf.Max(m_HasteTimer, duration);
+                m_IsSlowed = false; // 감속 해제
+                m_SlowTimer = 0f;
+                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 가속되었습니다!");
+                break;
+
+            case StatusEffectType.Slow:
+                m_IsSlowed = true;
+                m_SlowTimer = Mathf.Max(m_SlowTimer, duration);
+                m_IsHasted = false; // 가속 해제
+                m_HasteTimer = 0f;
+                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 감속되었습니다!");
+                break;
         }
-        return true; 
+        return true;
+    }
+
+    /// 쿨타임 즉시 감소 (초과분 적용)
+    public virtual void ReduceCooldown(float amount)
+    {
+        CurrentCooldown -= amount;
+
+        if (CurrentCooldown <= 0f)
+        {
+            float excessAmount = -CurrentCooldown; // 초과분 
+
+            ExecuteSkill(); // 스킬 즉시 발동
+
+            // 쿨타임을 100%로 채우고, 초과분만큼 다시 감소
+            CurrentCooldown = CooldownTime - excessAmount;
+        }
+    }
+
+    //쿨타임 즉시 증가
+    public virtual void IncreaseCooldown(float amount)
+    {
+        if (!m_IsFrozen)
+        {
+            CurrentCooldown += amount;
+        }
     }
 }

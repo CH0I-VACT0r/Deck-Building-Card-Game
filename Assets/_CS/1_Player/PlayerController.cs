@@ -627,6 +627,8 @@ public class PlayerController
                     cooldownOverlay.style.display = DisplayStyle.Flex;
                     cooldownOverlay.style.height = Length.Percent(100f);
                     cooldownOverlay.AddToClassList("cooldown-overlay-frozen");
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
                 }
                 // 일반 쿨타임 상태인지 확인
                 else if (cardData.CurrentCooldown > 0.01f)
@@ -639,12 +641,34 @@ public class PlayerController
 
                     // 빙결 제거
                     cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
+
+                    // 가속 상태 확인
+                    if (cardData.IsHasted())
+                    {
+                        cooldownOverlay.AddToClassList("cooldown-overlay-hasted");
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
+                    }
+                    // 감속 상태 확인
+                    else if (cardData.IsSlowed())
+                    {
+                        cooldownOverlay.AddToClassList("cooldown-overlay-slowed");
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                    }
+                    // 일반' 쿨타임 상태입니다.
+                    else
+                    {
+                        // 모든 특수 색상 제거
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
+                    }
                 }
-                // 준비 상태
+                // 기본 준비 상태
                 else
                 {
                     cooldownOverlay.style.display = DisplayStyle.None;
                     cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
                     cooldownOverlay.style.height = Length.Percent(100f);
                 }
             }
@@ -657,11 +681,17 @@ public class PlayerController
                 float currentDamage = cardData.GetCurrentDamage();
                 if (currentDamage > 0) { CreateRoleIcon(roleUIContainer, "role-attacker", currentDamage.ToString()); }
 
-                // 우선순위 2: 상태이상 (출혈)
+                // 우선순위 2: 상태이상
+                // 출혈
                 int currentBleed = cardData.GetCurrentBleedStacks();
                 if (currentBleed > 0) { CreateRoleIcon(roleUIContainer, "role-bleed", currentBleed.ToString()); }
-
-                // 우선순위 2: 상태이상 (빙결)
+                //화상
+                int currentBurn = cardData.GetCurrentBurnStacks();
+                if (currentBurn > 0) { CreateRoleIcon(roleUIContainer, "role-burn", currentBurn.ToString()); }
+                // 중독
+                int currentPoison = cardData.GetCurrentPoisonStacks();
+                if (currentPoison > 0) { CreateRoleIcon(roleUIContainer, "role-poison", currentPoison.ToString()); }
+                // 빙결
                 float currentFreeze = cardData.GetCurrentFreezeDuration();
                 if (currentFreeze > 0) { CreateRoleIcon(roleUIContainer, "role-freeze", currentFreeze.ToString()); }
 
@@ -720,6 +750,25 @@ public class PlayerController
                 m_Cards[i].CurrentCooldown = 0f; // 쿨타임 초기화
                 UpdateCardSlotUI(i); // UI 갱신
             }
+        }
+    }
+
+    // --- 11. 카드 파괴 함수 ---
+    // 이 함수는 '전투 중' 파괴만 담당 : 다음 획득 전까지 영구적으로 사라지는 로직은 이곳이 아닌 메인 덱 리스트에서 이 카드를 제거함으로써 구현
+    public virtual void DestroyCard(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= 7) return;
+
+        Card cardToDestroy = m_Cards[slotIndex];
+        if (cardToDestroy != null)
+        {
+            Debug.Log($"[{cardToDestroy.CardName}] (이)가 파괴되었습니다!");
+
+            // 1. C# 배열에서 카드를 제거 (null로 만듦)
+            m_Cards[slotIndex] = null;
+
+            // 2. UI를 빈 슬롯 상태로 즉시 업데이트 (이미지/UI 모두 지움)
+            UpdateCardSlotUI(slotIndex);
         }
     }
 

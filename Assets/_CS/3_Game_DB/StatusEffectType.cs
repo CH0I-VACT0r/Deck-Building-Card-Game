@@ -10,6 +10,8 @@ public enum StatusEffectType
     Poison,  // 중독
     Heal, // 회복
     Burn, // 화상
-    Freeze // 빙결
+    Freeze, // 빙결
+    Haste, // 가속
+    Slow // 감속
     // (나중에 '기절' 등 추가...)
 }
