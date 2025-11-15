@@ -308,14 +308,13 @@ VisualElement {
 }
 
 .cooldown-overlay-hasted {
-    /* (예시) 밝은 초록색 */
-    background-color: rgba(200, 248, 248, 0.7); /* #2ECC71 */
+    background-color: rgba(200, 248, 248, 0.4); /* #2ECC71 */
     border-width: 1px;
     border-color: #90D4EB;
 }
 
 .cooldown-overlay-slowed {
-    background-color: #D2691E; /* #D2691E (Chocolate) */
+    background-color: rgba(121, 121, 121, 0.4); /* #D2691E (Chocolate) */
     border-width: 1px;
     border-color: #D2691E;
 }

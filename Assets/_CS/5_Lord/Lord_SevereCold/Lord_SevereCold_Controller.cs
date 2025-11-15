@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UIElements; // UI Toolkit 사용
-using System.Diagnostics; // Debug.Log 대신 사용 가능
 
 /// '혹한의 성주' 전용 컨트롤러
 /// 'PlayerController'의 모든 공통 기능 상속
@@ -89,34 +88,36 @@ public class Lord_SevereCold_Controller : PlayerController
     // '혹한의 성주' 덱을 생성
     public override void SetupDeck(string[] cardNames)
     {
-        m_Cards[0] = new Card_BarbarianWarrior(this, 0);
-        UpdateCardSlotUI(0);
+        // [프로토타입용 하드코딩]
+        // (나중에는 이 'testDeck' 배열이 '전략 씬'에서 넘어옵니다)
+        string[] testDeck = new string[]
+        {
+            "BarbarianWarrior",    // 1번 슬롯 (인덱스 0)
+            null,             // 2번 슬롯 (비어있음)
+            null,             // 3번 슬롯
+            null,             // 4번 슬롯
+            null,             // 5번 슬롯
+            null,             // 6번 슬롯
+            null              // 7번 슬롯
+        };
 
-        m_Cards[1] = new Card_Shieldbearer(this, 1);
-        UpdateCardSlotUI(1);
+        //덱 생성
+        for (int i = 0; i < 7; i++)
+        {
+            if (!string.IsNullOrEmpty(testDeck[i])) // 덱 정보가 비어있지 않다면
+            {
+                m_Cards[i] = CardFactory.CreateCard(testDeck[i], this, i);
+                UpdateCardSlotUI(i);
+            }
+        }
 
-        m_Cards[2] = new Card_Bloodletter(this, 2);     // 출혈 카드
-        UpdateCardSlotUI(2);
-
-        m_Cards[3] = new Card_Healer(this, 3);          // 즉발 힐 카드
-        UpdateCardSlotUI(3);
-
-        m_Cards[4] = new Card_Regenerator(this, 4);     // 지속 힐 카드
-        UpdateCardSlotUI(4);
-
-        m_Cards[5] = new Card_FrostFowl(this, 5);     // 빙결 카드
-        UpdateCardSlotUI(5);
-
-        m_Cards[6] = new Card_FuriousWarrior(this, 6);     // 빙결 카드
-        UpdateCardSlotUI(6);
-
-        UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 혹한의 성주 전용 덱 설정 완료.");
+        Debug.Log("[Lord_SevereCold_Controller] 덱 설정 완료.");
 
         // 쿨타임 초기화
         for (int i = 0; i < 7; i++)
         {
             if (m_Cards[i] != null)
-                m_Cards[i].CurrentCooldown = m_Cards[i].CooldownTime;
+                m_Cards[i].CurrentCooldown = m_Cards[i].GetCurrentCooldownTime();
         }
     }
 }

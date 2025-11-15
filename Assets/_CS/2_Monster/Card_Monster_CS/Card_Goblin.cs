@@ -8,20 +8,20 @@ using UnityEngine;
 public class Card_Goblin : Card // Card 뼈대를 상속
 {
     // --- 1. 고블린의 고유 스탯 ---
-    private float m_Damage = 20f;
-    private const float COOLDOWN = 6f;
+    private float m_Damage = 1f;
+    private const float COOLDOWN = 10f;
 
     // --- 2. 생성자 ---
     /// '고블린' 카드가 생성될 때 호출됩니다.
     /// <param name="owner">나를 소유한 MonsterController</param>
     /// <param name="index">내가 배치된 슬롯 인덱스 (0~6)</param>
     public Card_Goblin(MonsterController owner, int index)
-        : base(owner, index, COOLDOWN) // 부모(Card)에게 주인, 인덱스, 쿨타임(6초)을 전달
+        : base(owner, index, COOLDOWN)
     {
         // 1. 기본 정보 설정
         this.CardName = "고블린 돌격병";
         this.Rarity = CardRarity.Bronze;
-        this.BaseDamage = 20f;
+        this.BaseDamage = 1f;
 
         // 2. 이미지 로드 (Resources/CardImages/goblin_art.png 파일이 있다고 가정)
         this.CardImage = Resources.Load<Sprite>("CardImages/Monster/Goblin"); 

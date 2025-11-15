@@ -10,13 +10,14 @@ public abstract class Card
     public string CardName { get; protected set; } // 카드 이름
     public Sprite CardImage { get; protected set; } // 카드 이미지
     public CardRarity Rarity { get; protected set; } // 카드 등급
-    public float CooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
+    public float BaseCooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
     public float CurrentCooldown { get; set; } // 현재 남은 쿨타임. 0이 되면 스킬 발동
     protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
     public int SlotIndex { get; private set; } // 카드가 몇 번 슬롯에 있는지
     public int Durability { get; protected set; } = -1; // 내구도
     protected int InnateEchoCount { get; set; } = 1;  // 기본 시전 횟수
     private int m_BonusEchoStacks = 0; // 추가 시전 횟수 변수
+    public bool ShowCooldownUI { get; protected set; } = true; // 쿨타운 UI 표기 여부 : 패시브 스킬만 있는 카드는 표기 안 함
 
     // 역할 UI - [기본]
     public float BaseDamage { get; protected set; } = 0;   // 기본 대미지
@@ -43,19 +44,18 @@ public abstract class Card
     public virtual int GetCurrentPoisonStacks() { return this.PoisonStacksToApply; } // [신규!]
     public virtual int GetCurrentBurnStacks() { return this.BurnStacksToApply; }
 
-    // --- [상태 이상 컨트롤] ---
-    public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>(); // 면역
-    private bool m_IsFrozen = false; // 빙결 여부
-    private float m_FreezeTimer = 0f; // 빙결 타이머
+
+    // --- [쿨타임 컨트롤] ---
+    public virtual float GetCurrentCooldownTime()
+    {
+        return this.BaseCooldownTime;
+    }
+
     private bool m_IsHasted = false; // 가속 여부
     private float m_HasteTimer = 0f; // 가속 타이머
     private bool m_IsSlowed = false; // 감속 여부
     private float m_SlowTimer = 0f; // 감속 타이머
 
-    public bool IsFrozen()
-    {
-        return m_IsFrozen;
-    }
     public bool IsHasted()
     {
         return m_IsHasted;
@@ -65,6 +65,18 @@ public abstract class Card
         return m_IsSlowed;
     }
 
+
+    // --- [상태 이상 컨트롤] ---
+    public List<StatusEffectType> Immunities { get; protected set; } = new List<StatusEffectType>(); // 면역
+    private bool m_IsFrozen = false; // 빙결 여부
+    private float m_FreezeTimer = 0f; // 빙결 타이머
+    
+
+    public bool IsFrozen()
+    {
+        return m_IsFrozen;
+    }
+   
     public virtual void ClearBattleFrozen() // 어디서 쓰는 지 몰라서 일단 남겨둠
     {
         // 빙결 상태를 강제로 해제합니다.
@@ -101,8 +113,8 @@ public abstract class Card
     {
         this.m_Owner = owner;
         this.SlotIndex = index;
-        this.CooldownTime = cooldown;
-        this.CurrentCooldown = cooldown; // 전투 시작 시 쿨타임이 가득 찬 상태로 시작
+        this.BaseCooldownTime = cooldown;
+        this.CurrentCooldown = GetCurrentCooldownTime(); // 전투 시작 시 쿨타임이 가득 찬 상태로 시작
         this.CardName = "Default Card Name"; 
     }
 
@@ -119,23 +131,21 @@ public abstract class Card
     // 스킬 반복 횟수 계산
     public virtual void TriggerSkill()
     {
-        // 1.시전 횟수 체크
-        int totalCasts = this.InnateEchoCount + this.m_BonusEchoStacks;
+        int totalCasts = this.InnateEchoCount + this.m_BonusEchoStacks; // 1.시전 횟수 체크
 
-        // 2. 보너스 스택은 즉시 소모
+        // 보너스 스택 즉시 소모
         this.m_BonusEchoStacks = 0;
 
-        // 3. 횟수만큼 ExecuteSkill() 호출
+        // 횟수만큼 ExecuteSkill() 호출
         for (int i = 0; i < totalCasts; i++)
         {
             ExecuteSkill();
         }
 
-        // 4. 쿨타임 초기화
-        this.CurrentCooldown = this.CooldownTime;
-
-        // 5. 내구도 소모
-        ConsumeDurability();
+        float excessAmount = (CurrentCooldown <= 0f) ? -CurrentCooldown : 0f; // 남은 쿨타임 초과분 체크
+        this.CurrentCooldown = this.GetCurrentCooldownTime() - excessAmount; // 쿨타임 초기화
+        
+        ConsumeDurability(); // 내구도 소모
     }
 
     // 크리티컬 확인
@@ -152,7 +162,20 @@ public abstract class Card
         return 1.0f; // 1배
     }
 
-    /// BattleManager가 매 프레임 호출하여 쿨타임을 줄여주는 함수
+    // 인접 버프 (Aura) 확인
+    public virtual float GetAuraBuffTo(Card recipient, string buffType)
+    {
+        // 기본적으로, 모든 카드는 아무 아우라도 주지 않는다.
+        return 0f;
+    }
+
+    // 죽음의 메아리 확인
+    public virtual void OnDestroyed()
+    {
+        // 기본적으로, 대부분의 카드는 파괴될 때 아무 일도 하지 않는다.
+    }
+
+    // 쿨타임 줄여주는 함수 : 매 프레임 호출
     public virtual void UpdateCooldown(float deltaTime)
     {
         // 1. 빙결 체크
@@ -234,16 +257,14 @@ public abstract class Card
     public virtual void ReduceCooldown(float amount)
     {
         CurrentCooldown -= amount;
+        //if (CurrentCooldown <= 0f)
+        //{
+        //    float excessAmount = -CurrentCooldown; // 초과분 (예: 1.5f)
 
-        if (CurrentCooldown <= 0f)
-        {
-            float excessAmount = -CurrentCooldown; // 초과분 
-
-            ExecuteSkill(); // 스킬 즉시 발동
-
-            // 쿨타임을 100%로 채우고, 초과분만큼 다시 감소
-            CurrentCooldown = CooldownTime - excessAmount;
-        }
+        //    // TriggerSkill()이 아니라 ExecuteSkill()을 직접 호출해야
+        //    ExecuteSkill();
+        //    CurrentCooldown = GetCurrentCooldownTime() - excessAmount;
+        //}
     }
 
     //쿨타임 즉시 증가

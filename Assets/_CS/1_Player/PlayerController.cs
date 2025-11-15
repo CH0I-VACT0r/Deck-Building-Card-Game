@@ -540,7 +540,7 @@ public class PlayerController
         {
             if (BleedStacks > 0)
             {
-                m_BleedStatusLabel.text = $"BLEED : {BleedStacks}";
+                m_BleedStatusLabel.text = $"{BleedStacks}";
                 m_BleedStatusLabel.style.display = DisplayStyle.Flex; // 보이기
             }
             else
@@ -554,7 +554,7 @@ public class PlayerController
         {
             if (PoisonStacks > 0)
             {
-                m_PoisonStatusLabel.text = $"POISON : {PoisonStacks}";
+                m_PoisonStatusLabel.text = $"{PoisonStacks}";
                 m_PoisonStatusLabel.style.display = DisplayStyle.Flex;
             }
             else
@@ -568,7 +568,7 @@ public class PlayerController
         {
             if (BurnStacks > 0)
             {
-                m_BurnStatusLabel.text = $"BURN : {BurnStacks}";
+                m_BurnStatusLabel.text = $"{BurnStacks}";
                 m_BurnStatusLabel.style.display = DisplayStyle.Flex;
             }
             else
@@ -582,7 +582,7 @@ public class PlayerController
         {
             if (HealStacks > 0)
             {
-                m_HealStatusLabel.text = $"REGEN : {HealStacks}";
+                m_HealStatusLabel.text = $"{HealStacks}";
                 m_HealStatusLabel.style.display = DisplayStyle.Flex;
             }
             else
@@ -620,55 +620,61 @@ public class PlayerController
             // 쿨타임 UI 업데이트
             if (cooldownOverlay != null)
             {
-                //카드가 '빙결' 상태인지 먼저 확인
-                if (cardData.IsFrozen())
+                // 패시브 카드인지 확인
+                if (cardData.ShowCooldownUI)
                 {
-                    cooldownOverlay.style.display = DisplayStyle.Flex;
-                    cooldownOverlay.style.height = Length.Percent(100f);
-                    cooldownOverlay.AddToClassList("cooldown-overlay-frozen");
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
-                }
-                // 일반 쿨타임 상태인지 확인
-                else if (cardData.CurrentCooldown > 0.01f)
-                {
-                    cooldownOverlay.style.display = DisplayStyle.Flex; // 1. 오버레이를 켠다
-
-                    // '남은 %'만큼 높이를 조절
-                    float percent = cardData.CurrentCooldown / cardData.CooldownTime;
-                    cooldownOverlay.style.height = Length.Percent(percent * 100f);
-
-                    // 빙결 제거
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
-
-                    // 가속 상태 확인
-                    if (cardData.IsHasted())
+                    //카드가 '빙결' 상태인지 먼저 확인
+                    if (cardData.IsFrozen())
                     {
-                        cooldownOverlay.AddToClassList("cooldown-overlay-hasted");
+                        cooldownOverlay.style.display = DisplayStyle.Flex;
+                        cooldownOverlay.style.height = Length.Percent(100f);
+                        cooldownOverlay.AddToClassList("cooldown-overlay-frozen");
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
                         cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
                     }
-                    // 감속 상태 확인
-                    else if (cardData.IsSlowed())
+                    // 일반 쿨타임 상태인지 확인
+                    
+                    else if (cardData.CurrentCooldown > 0.01f)
                     {
-                        cooldownOverlay.AddToClassList("cooldown-overlay-slowed");
-                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                        cooldownOverlay.style.display = DisplayStyle.Flex; // 오버레이
+                        float maxCooldown = cardData.GetCurrentCooldownTime(); // 
+                        float percent = (maxCooldown > 0) ? (cardData.CurrentCooldown / maxCooldown) : 1f; 
+                        cooldownOverlay.style.height = Length.Percent(percent * 100f); // '남은 %'만큼 높이를 조절
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen"); // 빙결 제거
+
+                        // 가속 상태 확인
+                        if (cardData.IsHasted())
+                        {
+                            cooldownOverlay.AddToClassList("cooldown-overlay-hasted");
+                            cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
+                        }
+                        // 감속 상태 확인
+                        else if (cardData.IsSlowed())
+                        {
+                            cooldownOverlay.AddToClassList("cooldown-overlay-slowed");
+                            cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                        }
+                        // 일반' 쿨타임 상태입니다.
+                        else
+                        {
+                            // 모든 특수 색상 제거
+                            cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
+                            cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
+                        }
                     }
-                    // 일반' 쿨타임 상태입니다.
+                    // 기본 준비 상태
                     else
                     {
-                        // 모든 특수 색상 제거
+                        cooldownOverlay.style.display = DisplayStyle.None;
+                        cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
                         cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
                         cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
+                        cooldownOverlay.style.height = Length.Percent(100f);
                     }
                 }
-                // 기본 준비 상태
                 else
                 {
                     cooldownOverlay.style.display = DisplayStyle.None;
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-frozen");
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-hasted");
-                    cooldownOverlay.RemoveFromClassList("cooldown-overlay-slowed");
-                    cooldownOverlay.style.height = Length.Percent(100f);
                 }
             }
                 // 역할 UI 업데이트
@@ -762,7 +768,7 @@ public class PlayerController
         if (cardToDestroy != null)
         {
             Debug.Log($"[{cardToDestroy.CardName}] (이)가 파괴되었습니다!");
-
+            cardToDestroy.OnDestroyed();
             // 1. C# 배열에서 카드를 제거 (null로 만듦)
             m_Cards[slotIndex] = null;
 
@@ -772,9 +778,9 @@ public class PlayerController
     }
 
     // --- 12. 카드 소환 함수 ---
-    public virtual bool SpawnCardToRandomEmptySlot(Card cardToSpawn)
+    public virtual bool SpawnCardToRandomEmptySlot(string cardID)
     {
-        // 빈 슬롯 찾기
+        // 비어있는 슬롯 찾기
         int emptySlotIndex = -1;
         for (int i = 0; i < 7; i++)
         {
@@ -785,20 +791,29 @@ public class PlayerController
             }
         }
 
-        if (emptySlotIndex != -1)
+        if (emptySlotIndex == -1)
         {
-            Debug.Log($"[{cardToSpawn.CardName}] (을)를 {emptySlotIndex}번 슬롯에 소환!");
-
-            // 카드 추가
-            m_Cards[emptySlotIndex] = cardToSpawn;
-
-            //UI 업데이트
-            UpdateCardSlotUI(emptySlotIndex);
-            return true;
+            Debug.Log($"[{cardID}] 소환 실패: 빈 슬롯이 없습니다.");
+            return false;
         }
 
-        Debug.Log("빈 슬롯이 없어 소환에 실패했습니다.");
-        return false;
+        // CardFactory 카드 생성 요청
+        Card newCard = CardFactory.CreateCard(cardID, this, emptySlotIndex);
+
+        if (newCard == null)
+        {
+            Debug.LogError($"[SpawnCard] CardFactory가 {cardID} 카드 생성을 실패했습니다.");
+            return false;
+        }
+
+        //카드 배치
+        m_Cards[emptySlotIndex] = newCard;
+
+        //UI 업데이트
+        UpdateCardSlotUI(emptySlotIndex);
+
+        Debug.Log($"[{newCard.CardName}] (이)가 {emptySlotIndex}번 슬롯에 성공적으로 소환되었습니다!");
+        return true;
     }
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
