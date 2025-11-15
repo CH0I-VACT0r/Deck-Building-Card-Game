@@ -15,6 +15,8 @@ public abstract class Card
     protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
     public int SlotIndex { get; private set; } // 카드가 몇 번 슬롯에 있는지
     public int Durability { get; protected set; } = -1; // 내구도
+    protected int InnateEchoCount { get; set; } = 1;  // 기본 시전 횟수
+    private int m_BonusEchoStacks = 0; // 추가 시전 횟수 변수
 
     // 역할 UI - [기본]
     public float BaseDamage { get; protected set; } = 0;   // 기본 대미지
@@ -114,6 +116,28 @@ public abstract class Card
     // 카드의 고유 스킬 로직 : 이 클래스를 상속받는 모든 카드는, 이 함수의 내용물을 반드시' 자신만의 로직으로 override 돼야 함.
     public abstract void ExecuteSkill();
 
+    // 스킬 반복 횟수 계산
+    public virtual void TriggerSkill()
+    {
+        // 1.시전 횟수 체크
+        int totalCasts = this.InnateEchoCount + this.m_BonusEchoStacks;
+
+        // 2. 보너스 스택은 즉시 소모
+        this.m_BonusEchoStacks = 0;
+
+        // 3. 횟수만큼 ExecuteSkill() 호출
+        for (int i = 0; i < totalCasts; i++)
+        {
+            ExecuteSkill();
+        }
+
+        // 4. 쿨타임 초기화
+        this.CurrentCooldown = this.CooldownTime;
+
+        // 5. 내구도 소모
+        ConsumeDurability();
+    }
+
     // 크리티컬 확인
     protected float CheckForCrit()
     {
@@ -195,6 +219,12 @@ public abstract class Card
                 m_IsHasted = false; // 가속 해제
                 m_HasteTimer = 0f;
                 Debug.Log($"[{this.CardName}] (이)가 {duration}초간 감속되었습니다!");
+                break;
+
+            case StatusEffectType.Echo:
+                // duration을 추가 시전 횟수로 사용
+                m_BonusEchoStacks += (int)duration;
+                Debug.Log($"[{this.CardName}] (이)가 '메아리' {duration}스택을 얻었습니다!");
                 break;
         }
         return true;

@@ -12,6 +12,7 @@ public enum StatusEffectType
     Burn, // 화상
     Freeze, // 빙결
     Haste, // 가속
-    Slow // 감속
+    Slow, // 감속
+    Echo // 스킬 반복 시전
     // (나중에 '기절' 등 추가...)
 }

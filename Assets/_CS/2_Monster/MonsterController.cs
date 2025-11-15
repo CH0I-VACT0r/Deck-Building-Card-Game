@@ -143,8 +143,7 @@ public class MonsterController
 
                 if (m_Cards[i].CurrentCooldown <= 0f)
                 {
-                    m_Cards[i].ExecuteSkill(); // 카드가 알아서 스킬을 씁니다.
-                    m_Cards[i].CurrentCooldown = m_Cards[i].CooldownTime; // 쿨타임 초기화
+                    m_Cards[i].TriggerSkill(); // 카드가 알아서 스킬을 씁니다.
                 }
                 UpdateCardSlotUI(i); // 매 프레임 UI를 업데이트 (쿨타임 표기)
             }
@@ -702,6 +701,36 @@ public class MonsterController
             // 2. UI를 빈 슬롯 상태로 즉시 업데이트 (이미지/UI 모두 지움)
             UpdateCardSlotUI(slotIndex);
         }
+    }
+
+    // --- 12. 카드 소환 함수 ---
+    public virtual bool SpawnCardToRandomEmptySlot(Card cardToSpawn)
+    {
+        // 빈 슬롯 찾기
+        int emptySlotIndex = -1;
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] == null)
+            {
+                emptySlotIndex = i;
+                break;
+            }
+        }
+
+        if (emptySlotIndex != -1)
+        {
+            Debug.Log($"[{cardToSpawn.CardName}] (을)를 {emptySlotIndex}번 슬롯에 소환!");
+
+            // 카드 추가
+            m_Cards[emptySlotIndex] = cardToSpawn;
+
+            //UI 업데이트
+            UpdateCardSlotUI(emptySlotIndex);
+            return true;
+        }
+
+        Debug.Log("빈 슬롯이 없어 소환에 실패했습니다.");
+        return false;
     }
 
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
