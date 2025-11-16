@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements; // UI Toolkit 사용
 using System.Collections.Generic; // List 사용
 
-// 모든 플레이어 영주(Lord)의 공통 부모가 되는 기본 클래스
-// 체력, 슬롯, 카드 덱 등 공통 기능만 관리
+// 모든 플레이어 영주(Lord)의 공통 부모가 되는 기본 클래스 : 체력, 슬롯, 카드 덱 등 공통 기능만 관리
 // 영주만의 특수한 로직은 포함하지 않고, 따로 관리
 
 public class PlayerController
@@ -36,6 +35,8 @@ public class PlayerController
     private List<VisualElement> m_RoleUIContainers = new List<VisualElement>(7);
     private List<VisualElement> m_CooldownOverlays = new List<VisualElement>(7);
     private List<VisualElement> m_CardImageLayers = new List<VisualElement>(7);
+    private List<VisualElement> m_CostContainers = new List<VisualElement>(7);
+    private List<Label> m_CostLabels = new List<Label>(7);
 
     // --- 3. 핵심 상태 (공통) ---
     public float CurrentHP { get; protected set; } /// 영주의 현재 체력
@@ -58,6 +59,15 @@ public class PlayerController
     private float m_BurnTickTimer = 0.5f;    // 화상 : 0.5초
     private float m_HealTickTimer = 2.0f; // 회복 : 2초
 
+    // 충격/견고 상태 변수
+    private bool m_IsShocked = false;
+    private float m_ShockTimer = 0f;
+    private bool m_IsSturdy = false;
+    private float m_SturdyTimer = 0f;
+
+    // 충격/견고 배율 (상수)
+    private const float SHOCK_MULTIPLIER = 1.2f; // 20% 추가 피해
+    private const float STURDY_MULTIPLIER = 0.8f; // 20% 피해 감소
 
     // --- 4. 카드 덱 관리 ---
     /// 이 영주가 현재 전투에서 사용하는 7칸의 카드 배열
@@ -66,9 +76,6 @@ public class PlayerController
 
     // --- 5. 생성자 ---
     /// PlayerController가 처음 생성될 때 호출
-    /// <param name="manager">나를 관리할 BattleManager</param>
-    /// <param name="VisualElement">내가 제어할 UXML의 'PlayerParty' 패널</param>
-    /// <param name="maxHP">이 영주의 최대 체력</param>
     public PlayerController(BattleManager manager, VisualElement VisualElement, float maxHP)
     {
         this.m_BattleManager = manager;
@@ -84,35 +91,41 @@ public class PlayerController
         m_RoleUIContainers.Clear();
         m_CooldownOverlays.Clear();
         m_CardImageLayers.Clear();
+        m_CostContainers.Clear();
+        m_CostLabels.Clear();
         for (int i = 0; i < 7; i++)
         {
-            // UXML에 정의된 이름 (예: "Player_Slot_0")
+            // UXML에 정의된 이름 (UXML 이름 확인!)
             VisualElement slot = m_PlayerParty.Q<VisualElement>("CardSlot" + (i + 1));
             Slots.Add(slot);
 
             if (slot != null)
             {
-                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
+                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage")); 
                 m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
                 m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
+                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
+                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
             }
             else
             {
                 Debug.LogError($"[PlayerController] 'CardSlot{i + 1}'을 UXML에서 찾을 수 없습니다!");
                 m_RoleUIContainers.Add(null);
                 m_CooldownOverlays.Add(null);
+                m_CostContainers.Add(null);
+                m_CostLabels.Add(null);
             }
         }
 
-        // 3. 상태 UI 요소들 찾기
+        // 상태 UI
         if (m_StatusPanel != null)
         {
             m_LordPortrait = m_StatusPanel.Q<VisualElement>("Portrait");
-            m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill"); // UXML 이름 확인!
-            m_HealthLabel = m_StatusPanel.Q<Label>("HP-label"); // UXML 이름 확인!
-            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill"); // UXML 이름 확인!
-            m_ShieldLabel = m_StatusPanel.Q<Label>("Shield-label"); // UXML 이름 확인!
-            m_LevelLabel = m_StatusPanel.Q<Label>("LV-label"); // UXML 이름 확인!
+            m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill");
+            m_HealthLabel = m_StatusPanel.Q<Label>("HP-label");
+            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill");
+            m_ShieldLabel = m_StatusPanel.Q<Label>("Shield-label");
+            m_LevelLabel = m_StatusPanel.Q<Label>("LV-label");
 
             m_XPTicks.Clear();
             for (int i = 0; i < 10; i++)
@@ -120,7 +133,7 @@ public class PlayerController
                 m_XPTicks.Add(m_StatusPanel.Q<VisualElement>("XPTick" + i));
             }
 
-            //DoT 아이콘 라벨 찾기
+            //DoT 아이콘
             m_BleedStatusLabel = m_StatusPanel.Q<Label>("BleedStatus");
             m_PoisonStatusLabel = m_StatusPanel.Q<Label>("PoisonStatus");
             m_BurnStatusLabel = m_StatusPanel.Q<Label>("BurnStatus");
@@ -131,45 +144,51 @@ public class PlayerController
             Debug.LogError("[PlayerController] 'PlayerStatusPanel'을 UXML에서 찾을 수 없습니다!");
         }
 
-        // 4. UI를 현재 상태로 즉시 업데이트
+        // UI 업데이트
         UpdateHealthUI();
         UpdateXPUI();
         UpdateDoTUI();
     }
 
     // --- 6. 핵심 함수 ---
-    /// BattleManager가 호출해주는, 이 컨트롤러의 매 프레임 업데이트 함수
-    /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
-
     public virtual void BattleUpdate(float deltaTime)
     {
-        // (공통) 내 카드들의 쿨타임 회전 및 스킬을 발동
+        // 내 카드들의 쿨타임 회전 및 스킬 발동
         for (int i = 0; i < 7; i++)
         {
-            if (m_Cards[i] != null) // 해당 슬롯에 카드가 있다면
+            if (m_Cards[i] != null)
             {
-                // 카드가 스스로 쿨타임을 줄이도록 함
                 m_Cards[i].UpdateCooldown(deltaTime);
 
-                // 쿨타임이 0 이하가 되면 스킬 발동
+                // 스킬 발동
                 if (m_Cards[i].CurrentCooldown <= 0f)
                 {
-                    m_Cards[i].TriggerSkill(); // 카드가 알아서 스킬을 씁니다.
+                    m_Cards[i].TriggerSkill();
                 }
                 UpdateCardSlotUI(i);
             }
         }
-        // DoT 데미지 타이머 돌리기
+        // DoT 데미지 타이머
         ProcessDoTs(deltaTime);
     }
 
     /// (공통) 몬스터가 나를 공격할 때 호출하는 함수
-    /// <param name="amount">받는 피해량</param>
-
     public virtual void TakeDamage(float amount)
     {
-        float damageRemaining = amount;
+        // 최종 피해량 계산
+        float finalDamage = amount;
+        if (m_IsShocked)
+        {
+            finalDamage *= SHOCK_MULTIPLIER; // 20% 증폭
+        }
+        else if (m_IsSturdy) // (중첩 안 됨)
+        {
+            finalDamage *= STURDY_MULTIPLIER; // 20% 감소
+        }
+        finalDamage = Mathf.Round(finalDamage);
+        float damageRemaining = finalDamage;
 
+        // 쉴드 깎음
         if (CurrentShield > 0)
         {
             if (damageRemaining >= CurrentShield)
@@ -184,12 +203,13 @@ public class PlayerController
             }
         }
 
+        // 체력 깎음
         if (damageRemaining > 0)
         {
             CurrentHP -= damageRemaining;
         }
 
-        Debug.Log($"[플레이어] {amount} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
+        Debug.Log($"[플레이어] {finalDamage} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
 
         if (CurrentHP <= 0)
         {
@@ -197,6 +217,42 @@ public class PlayerController
             m_BattleManager.EndBattle("Monster"); // 패배!
         }
 
+        UpdateHealthUI();
+    }
+
+    public virtual void IncreaseMaxHP(float amount)
+    {
+        if (amount <= 0) return;
+
+        MaxHP += amount;
+        CurrentHP = MaxHP; // 현재 체력 최대로 회복
+
+        Debug.Log($"[플레이어] 최대 체력 영구 증가! (새로운 최대 HP: {MaxHP})");
+
+        // UI 즉시 업데이트
+        UpdateHealthUI();
+    }
+
+    public virtual void DecreaseMaxHP(float amount)
+    {
+        if (amount <= 0) return;
+
+        MaxHP -= amount;
+
+        // 최대 체력이 1 미만 방지
+        if (MaxHP < 1)
+        {
+            MaxHP = 1;
+        }
+
+        if (CurrentHP > MaxHP)
+        {
+            CurrentHP = MaxHP;
+        }
+
+        Debug.LogWarning($"[플레이어] 최대 체력을 담보로 지불! (새로운 최대 HP: {MaxHP})");
+
+        // UI 즉시 업데이트
         UpdateHealthUI();
     }
 
@@ -220,9 +276,8 @@ public class PlayerController
             CurrentLevel++;
             CurrentXP -= MaxXP; // 초과분
 
-            MaxHP += 10; // 레벨업 시 최대 체력 증가
+            MaxHP += 10; // 레벨업 시 최대 체력 증가 (추후 조정)
             CurrentHP = MaxHP; // 레벨업 시 체력 회복)
-                               // MaxXP = 10; 
 
             Debug.LogWarning($"[플레이어] 레벨 업! {CurrentLevel} 레벨 달성! (남은 XP: {CurrentXP})");
         }
@@ -244,9 +299,7 @@ public class PlayerController
     }
 
     // --- 7. 위치 호출 함수 ---
-    /// 내 덱(m_Cards)의 특정 인덱스에 있는 카드 반환
-    /// (범위를 벗어나면 null을 반환)
-    
+    /// 내 덱(m_Cards)의 특정 인덱스에 있는 카드 반환 : (범위를 벗어나면 null을 반환)
     public Card GetCardAtIndex(int index)
     {
         if (index >= 0 && index < 7 && m_Cards[index] != null)
@@ -256,19 +309,19 @@ public class PlayerController
         return null;
     }
 
-    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환
+    /// [인접-왼쪽] 왼쪽에 있는 카드를 반환
     public Card GetLeftNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex - 1);
     }
 
-    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환
+    /// [인접-오른쪽] 오른쪽에 있는 카드를 반환
     public Card GetRightNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex + 1);
     }
 
-    /// [상대 위치] "나의 맞은편"에 있는 몬스터 카드 반환
+    /// [상대 위치] 맞은편에 있는 몬스터 카드 반환
     public Card GetOppositeCard(int myIndex)
     {
         if (m_Target != null)
@@ -283,10 +336,10 @@ public class PlayerController
     public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
     {
         if (m_BattleManager.IsBattleEnded) return;
-        // 1) 0~6번 슬롯 인덱스가 담긴 리스트 생성
+        // 0~6번 슬롯 인덱스가 담긴 리스트 생성
         List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
 
-        // 2) 리스트 무작위 셔플
+        // 리스트 무작위 셔플
         for (int i = 0; i < slotIndices.Count; i++)
         {
             int temp = slotIndices[i];
@@ -295,27 +348,27 @@ public class PlayerController
             slotIndices[randomIndex] = temp;
         }
 
-        // 3) 적용에 성공한 횟수를 카운팅
+        // 적용에 성공한 횟수를 카운팅
         int successCount = 0;
 
-        // 4) 무작위로 섞인 슬롯 순서대로 확인
+        // 무작위로 섞인 슬롯 순서대로 확인
         foreach (int index in slotIndices)
         {
             Card card = GetCardAtIndex(index); // 
 
-            // 5) 슬롯이 비어있지 않은지 확인
+            // 슬롯이 비어있지 않은지 확인
             if (card != null)
             {
-                // 6) 카드에게 효과 적용을 시도
-                // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 합니다!)
+                // 카드에게 효과 적용 시도
+                // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 됨)
                 if (card.ApplyStatusEffect(effectType, duration))
                 {
-                    // 7) 적용에 성공했으면, 카운트를 1 올립니다.
+                    // 적용에 성공했으면, 카운팅
                     successCount++;
                 }
             }
 
-            // 8) 목표한 횟수(count)만큼 성공했으면, 즉시 종료합니다.
+            // 목표한 횟수(count)만큼 성공했으면, 즉시 종료
             if (successCount >= count)
             {
                 break;
@@ -340,6 +393,23 @@ public class PlayerController
                 break;
             case StatusEffectType.Heal:
                 HealStacks += stacks;
+                break;
+
+            // --- Buff/Debuff (지속시간) ---
+            case StatusEffectType.Shock: // 충격
+                m_IsShocked = true;
+                m_ShockTimer = Mathf.Max(m_ShockTimer, stacks); // 더 긴 시간으로 갱신
+                m_IsSturdy = false; // 견고 해제
+                m_SturdyTimer = 0f;
+                Debug.Log($"[플레이어] '감전' 효과! ({stacks}초)");
+                break;
+
+            case StatusEffectType.Sturdy: // 견고
+                m_IsSturdy = true;
+                m_SturdyTimer = Mathf.Max(m_SturdyTimer, stacks); // 더 긴 시간으로 갱신
+                m_IsShocked = false; // 감전 해제
+                m_ShockTimer = 0f;
+                Debug.Log($"[플레이어] '견고' 효과! ({stacks}초)");
                 break;
         }
         UpdateDoTUI(); // UI 업데이트
@@ -451,6 +521,30 @@ public class PlayerController
                 AddHealth(healAmount); // 체력 추가 함수 호출
                 Debug.Log($"[HoT] 지속 회복으로 {healAmount} 회복!");
                 m_HealTickTimer = 2.0f; // 2초 타이머 초기화
+            }
+        }
+
+        // (5) 충격 타이머
+        if (m_IsShocked)
+        {
+            m_ShockTimer -= deltaTime;
+            if (m_ShockTimer <= 0f)
+            {
+                m_IsShocked = false;
+                Debug.Log("[플레이어] '감전' 상태 해제!");
+                // (나중에 UI가 있다면 UpdateStatusEffectUI() 호출)
+            }
+        }
+
+        // (6) 견고 타이머
+        if (m_IsSturdy)
+        {
+            m_SturdyTimer -= deltaTime;
+            if (m_SturdyTimer <= 0f)
+            {
+                m_IsSturdy = false;
+                Debug.Log("[플레이어] '견고' 상태 해제!");
+                // (나중에 UI가 있다면 UpdateStatusEffectUI() 호출)
             }
         }
     }
@@ -594,27 +688,42 @@ public class PlayerController
 
     public virtual void UpdateCardSlotUI(int index)
     {
-        // 1) 인덱스가 유효 여부 확인
+        // 인덱스 유효 여부 확인
         if (index < 0 || index >= 7) return;
 
-        // 2) C# 데이터 & UI 슬롯 호출
+        // C# 데이터 & UI 슬롯 호출
         Card cardData = m_Cards[index];
         VisualElement slotUI = Slots[index];
 
         if (slotUI == null) return;
 
-        // 3. UI 내부 요소 호출
+        // UI 내부 요소 호출
         VisualElement cooldownOverlay = m_CooldownOverlays[index];
         VisualElement roleUIContainer = m_RoleUIContainers[index];
         VisualElement cardImageLayer = m_CardImageLayers[index];
+        VisualElement costContainer = m_CostContainers[index];
+        Label costLabel = m_CostLabels[index];
 
-        // 4. 카드 데이터에 따라 UI를 업데이트
+        // 카드 데이터에 따라 UI를 업데이트
         if (cardData != null) 
         {
             // 카드 이미지 적용
             if (cardImageLayer != null)
             {
                 cardImageLayer.style.backgroundImage = new StyleBackground(cardData.CardImage);
+            }
+            if (costContainer != null && costLabel != null)
+            {
+                // Card.cs의 CardPrice가 0보다 클 때만 UI를 켭니다.
+                if (cardData.CardPrice >= 0)
+                {
+                    costContainer.style.display = DisplayStyle.Flex;
+                    costLabel.text = cardData.CardPrice.ToString();
+                }
+                else
+                {
+                    costContainer.style.display = DisplayStyle.None;
+                }
             }
 
             // 쿨타임 UI 업데이트
@@ -759,7 +868,7 @@ public class PlayerController
     }
 
     // --- 11. 카드 파괴 함수 ---
-    // 이 함수는 '전투 중' 파괴만 담당 : 다음 획득 전까지 영구적으로 사라지는 로직은 이곳이 아닌 메인 덱 리스트에서 이 카드를 제거함으로써 구현
+    // 이 함수는 전투 중 파괴만 담당 : 다음 획득 전까지 영구적으로 사라지는 로직은 이곳이 아닌 메인 덱 리스트에서 이 카드를 제거함으로써 구현
     public virtual void DestroyCard(int slotIndex)
     {
         if (slotIndex < 0 || slotIndex >= 7) return;

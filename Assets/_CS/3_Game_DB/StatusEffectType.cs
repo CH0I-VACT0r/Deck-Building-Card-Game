@@ -13,6 +13,8 @@ public enum StatusEffectType
     Freeze, // 빙결
     Haste, // 가속
     Slow, // 감속
-    Echo // 스킬 반복 시전
-    // (나중에 '기절' 등 추가...)
+    Echo, // 스킬 반복 시전
+    Shock, // 충격 : 받는 피해 증가
+    Sturdy // 견고 : 받는 피해 감소
+    // (나중에 추가...)
 }

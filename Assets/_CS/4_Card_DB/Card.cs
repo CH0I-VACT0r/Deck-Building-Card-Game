@@ -10,6 +10,8 @@ public abstract class Card
     public string CardName { get; protected set; } // 카드 이름
     public Sprite CardImage { get; protected set; } // 카드 이미지
     public CardRarity Rarity { get; protected set; } // 카드 등급
+    public int CardPrice { get; protected set; } = 0; // 카드 가격
+    public LordType OwnerLord { get; protected set; } = LordType.Common;  // 소속 영주
     public float BaseCooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
     public float CurrentCooldown { get; set; } // 현재 남은 쿨타임. 0이 되면 스킬 발동
     protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터

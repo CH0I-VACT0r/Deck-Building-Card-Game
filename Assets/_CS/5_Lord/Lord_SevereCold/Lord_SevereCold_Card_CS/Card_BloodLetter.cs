@@ -32,7 +32,7 @@ public class Card_Bloodletter : Card // Card 뼈대를 상속
         if (target == null) return;
 
         // 3. [핵심!] 타겟에게 '출혈' 상태 이상을 적용시킵니다.
-        target.ApplyLordDoT(StatusEffectType.Bleed, this.BleedStacksToApply);
+        target.ApplyLordStatus(StatusEffectType.Bleed, this.BleedStacksToApply);
 
         Debug.Log($"[{this.CardName}] 스킬! -> 몬스터에게 출혈 {this.BleedStacksToApply} 중첩 부여!");
     }

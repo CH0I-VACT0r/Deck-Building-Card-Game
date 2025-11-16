@@ -1,7 +1,7 @@
 // 파일명: CardFactory.cs
 using UnityEngine;
 
-// '카드 ID' 문자열을 기반으로, 실제 'Card' 객체를 생성하는 데이터베이스
+// '카드 ID' 문자열을 기반 실제 Card 객체 생성 데이터베이스
 public static class CardFactory
 {
     //카드 ID, 주인, 슬롯을 받아 카드 생성

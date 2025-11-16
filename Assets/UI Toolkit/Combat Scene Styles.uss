@@ -326,3 +326,41 @@ VisualElement {
     /* 부드럽게 색이 변하는 효과 */
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
+
+/* --- 카드 가격 (Cost) UI --- */
+
+/* 가격 컨테이너 (동그라미 배경) */
+.cost-container {
+    /* 1. 위치: 좌측 하단 절대 배치 */
+    position: absolute;
+    bottom: -4px; 
+    left: -4px;
+
+    /* 2. 크기 및 모양 (동그라미) */
+    width: 25px;  /* 원의 지름 */
+    height: 25px; /* 원의 지름 */
+    border-radius: 50%; /* 50% = 완벽한 원 */
+
+    /* 3. 디자인 */
+    background-color: rgb(200, 130, 35);
+    border-width: 2px;
+    border-color: black;
+
+    align-items: center;
+    justify-content: center;
+}
+
+/* 가격 숫자 텍스트 (라벨) */
+.cost-label {
+    position: absolute;
+    left: 3;
+    right: 0;
+    top: 0;
+    bottom: 1;
+    font-size: 15px;
+    color: white;
+    -unity-font-style: bold;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
+    -unity-text-align: middle-center;
+}

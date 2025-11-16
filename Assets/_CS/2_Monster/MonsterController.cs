@@ -5,7 +5,6 @@ using System.Collections.Generic; // List 사용
 
 /// 모든 몬스터(일반, 보스)의 공통 부모가 되는 기본 클래스
 /// 몬스터의 체력, 슬롯, 카드 덱 등 공통 기능만 관리
-
 public class MonsterController
 {
     // --- 1. 참조 변수 ---
@@ -34,6 +33,8 @@ public class MonsterController
     private List<VisualElement> m_RoleUIContainers = new List<VisualElement>(7);
     private List<VisualElement> m_CooldownOverlays = new List<VisualElement>(7);
     private List<VisualElement> m_CardImageLayers = new List<VisualElement>(7);
+    private List<VisualElement> m_CostContainers = new List<VisualElement>(7);
+    private List<Label> m_CostLabels = new List<Label>(7);
 
     // --- 3. 핵심 상태 (공통) ---
     public float CurrentHP { get; protected set; } // 몬스터 현재 체력
@@ -52,6 +53,16 @@ public class MonsterController
     private float m_BurnTickTimer = 0.5f;    // 화상 : 0.5초
     private float m_HealTickTimer = 2.0f; // 회복 : 2초
 
+    // 충격/견고 상태 변수
+    private bool m_IsShocked = false;
+    private float m_ShockTimer = 0f;
+    private bool m_IsSturdy = false;
+    private float m_SturdyTimer = 0f;
+
+    // 충격/견고 배율 (상수)
+    private const float SHOCK_MULTIPLIER = 1.2f; // 20% 추가 피해
+    private const float STURDY_MULTIPLIER = 0.8f; // 20% 피해 감소
+
     // --- 4. 카드 덱 관리 ---
     /// 이 몬스터가 현재 전투에서 사용하는 7칸의 카드 배열
     protected Card[] m_Cards = new Card[7];
@@ -59,10 +70,6 @@ public class MonsterController
 
     // --- 5. 생성자 ---
     /// MonsterController가 처음 생성될 때 호출됩니다.
-    /// <param name="manager">나를 관리할 BattleManager</param>
-    /// <param name="VisualElement">내가 제어할 UXML의 'MonsterParty' 패널</param>
-    /// <param name="maxHP">이 몬스터의 최대 체력</param>
-    /// 
     public MonsterController(BattleManager manager, VisualElement VisualElement, float maxHP)
     {
         this.m_BattleManager = manager;
@@ -70,15 +77,17 @@ public class MonsterController
         this.CurrentHP = maxHP;
         this.CurrentShield = 0;
 
-        // 1) UXML 패널 이름
+        // UXML 패널 이름 (UXML Name 확인!)
         this.m_MonsterParty = VisualElement.Q<VisualElement>("MonsterParty");
-        this.m_StatusPanel = VisualElement.Q<VisualElement>("MonsterStatus"); // UXML Name 확인!
+        this.m_StatusPanel = VisualElement.Q<VisualElement>("MonsterStatus"); // 
 
-        // 2) 카드 슬롯(MonSlot1 ~ MonSlot7)을 찾아 리스트에 추가합니다.
+        // 카드 슬롯(MonSlot1 ~ MonSlot7) 리스트에 추가
         Slots.Clear();
         m_RoleUIContainers.Clear();
         m_CooldownOverlays.Clear();
         m_CardImageLayers.Clear();
+        m_CostContainers.Clear();
+        m_CostLabels.Clear();
         for (int i = 0; i < 7; i++)
         {
             string slotName = "MonSlot" + (i + 1);
@@ -90,19 +99,23 @@ public class MonsterController
                 m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
                 m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
                 m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
+                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
+                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
             }
             else
             {
                 Debug.LogError($"[MonsterController] 'MonSlot{i + 1}'을 UXML에서 찾을 수 없습니다!");
                 m_RoleUIContainers.Add(null);
                 m_CooldownOverlays.Add(null);
+                m_CostContainers.Add(null);
+                m_CostLabels.Add(null);
             }
         }
 
-        // 3. [신규!] 상태 UI 요소들을 찾아서 변수에 연결합니다.
+        // 3. 상태 UI 연결
         if (m_StatusPanel != null)
         {
-            // (UXML에 정의된 'Name'과 일치해야 합니다)
+            // UXML Name 확인!
             m_HealthBarFill = m_StatusPanel.Q<VisualElement>("Monster-HP-fill");
             m_HealthLabel = m_StatusPanel.Q<Label>("Monster-HP-label");
             m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Monster-ShieldBar-fill");
@@ -119,7 +132,7 @@ public class MonsterController
             Debug.LogError("[MonsterController] 'MonsterStatusPanel'을 UXML에서 찾을 수 없습니다!");
         }
 
-        // 4. [신규!] UI를 현재 상태로 즉시 업데이트합니다.
+        // 4. UI 즉시 업데이트
         UpdateHealthUI();
         UpdateDoTUI();
         if (m_NameLabel != null)
@@ -130,11 +143,9 @@ public class MonsterController
 
     // --- 6. 핵심 함수 ---
     /// BattleManager가 호출해주는, 이 컨트롤러의 매 프레임 업데이트 함수
-    /// <param name="deltaTime">Time.deltaTime (프레임당 시간)</param>
-  
     public virtual void BattleUpdate(float deltaTime)
     {
-        // 1. (공통) 몬스터 카드들의 쿨타임 회전 및 스킬 발동
+        // 몬스터 카드들의 쿨타임 회전 및 스킬 발동
         for (int i = 0; i < 7; i++)
         {
             if (m_Cards[i] != null) // 해당 슬롯에 카드가 있다면
@@ -145,20 +156,30 @@ public class MonsterController
                 {
                     m_Cards[i].TriggerSkill(); // 카드가 알아서 스킬을 씁니다.
                 }
-                UpdateCardSlotUI(i); // 매 프레임 UI를 업데이트 (쿨타임 표기)
+                UpdateCardSlotUI(i); // 매 프레임 UI 업데이트
             }
         }
-        // DoT 데미지 타이머 돌리기
+        // DoT 데미지 타이머
         ProcessDoTs(deltaTime);
     }
 
     /// (공통) 플레이어가 나를 공격할 때 호출하는 함수
-    /// <param name="amount">받는 피해량</param>
-
     public virtual void TakeDamage(float amount)
     {
-        float damageRemaining = amount;
+        // 최종 피해량 계산
+        float finalDamage = amount;
+        if (m_IsShocked)
+        {
+            finalDamage *= SHOCK_MULTIPLIER; // 20% 증폭
+        }
+        else if (m_IsSturdy) // (중첩 안 됨)
+        {
+            finalDamage *= STURDY_MULTIPLIER; // 20% 감소
+        }
+        finalDamage = Mathf.Round(finalDamage);
+        float damageRemaining = finalDamage;
 
+        // 쉴드 깎음
         if (CurrentShield > 0)
         {
             if (damageRemaining >= CurrentShield)
@@ -173,19 +194,58 @@ public class MonsterController
             }
         }
 
+        // 체력 깎음
         if (damageRemaining > 0)
         {
             CurrentHP -= damageRemaining;
         }
 
-        Debug.LogWarning($"[몬스터] {amount} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
+        Debug.Log($"[플레이어] {finalDamage} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
 
         if (CurrentHP <= 0)
         {
             CurrentHP = 0;
-            m_BattleManager.EndBattle("Player"); // 승리!
+            m_BattleManager.EndBattle("Monster"); // 패배!
         }
 
+        UpdateHealthUI();
+    }
+
+    // 최대 체력 증가
+    public virtual void IncreaseMaxHP(float amount)
+    {
+        if (amount <= 0) return;
+
+        MaxHP += amount;
+        CurrentHP = MaxHP; // 현재 체력 최대로 회복
+
+        Debug.Log($"[플레이어] 최대 체력 영구 증가! (새로운 최대 HP: {MaxHP})");
+
+        // UI 즉시 업데이트
+        UpdateHealthUI();
+    }
+
+    // 최대 체력 감소
+    public virtual void DecreaseMaxHP(float amount)
+    {
+        if (amount <= 0) return;
+
+        MaxHP -= amount;
+
+        // 최대 체력이 1 미만 방지
+        if (MaxHP < 1)
+        {
+            MaxHP = 1;
+        }
+
+        if (CurrentHP > MaxHP)
+        {
+            CurrentHP = MaxHP;
+        }
+
+        Debug.LogWarning($"[플레이어] 최대 체력을 담보로 지불! (새로운 최대 HP: {MaxHP})");
+
+        // UI 즉시 업데이트
         UpdateHealthUI();
     }
 
@@ -221,19 +281,19 @@ public class MonsterController
         return null;
     }
 
-    /// [인접-왼쪽] "나의 왼쪽"에 있는 카드를 반환
+    /// [인접-왼쪽] 왼쪽에 있는 카드 반환
     public Card GetLeftNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex - 1);
     }
 
-    /// [인접-오른쪽] "나의 오른쪽"에 있는 카드를 반환
+    /// [인접-오른쪽] 오른쪽에 있는 카드 반환
     public Card GetRightNeighbor(int myIndex)
     {
         return GetCardAtIndex(myIndex + 1);
     }
 
-    /// [상대 위치] "나의 맞은편"에 있는 플레이어 카드를 반환합니다.
+    /// [상대 위치] 맞은편에 있는 플레이어 카드 반환
     public Card GetOppositeCard(int myIndex)
     {
         if (m_Target != null)
@@ -244,15 +304,15 @@ public class MonsterController
     }
 
     // --- 8. 상태 이상 헬퍼 함수 ---
-    /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용합니다.
-    /// (플레이어의 '빙결' 스킬 등이 이 함수를 호출합니다.)
+    /// 내 카드 중 면역이 아닌 무작위 카드 N개에 상태 이상을 적용
+    /// (플레이어의 '빙결' 스킬 등이 이 함수를 호출
     public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
     {
         if (m_BattleManager.IsBattleEnded) return;
-        // 1) 0~6번 슬롯 인덱스가 담긴 리스트를 만듭니다.
+        // 0~6번 슬롯 인덱스 리스트 생성
         List<int> slotIndices = new List<int> { 0, 1, 2, 3, 4, 5, 6 };
 
-        // 2) 리스트를 무작위로 섞습니다 (Fisher-Yates Shuffle).
+        //리스트 셔플
         for (int i = 0; i < slotIndices.Count; i++)
         {
             int temp = slotIndices[i];
@@ -261,27 +321,23 @@ public class MonsterController
             slotIndices[randomIndex] = temp;
         }
 
-        // 3) 적용에 성공한 횟수를 셉니다.
+        // 성공 횟수 카운트
         int successCount = 0;
-
-        // 4) 무작위로 섞인 슬롯 순서대로 확인합니다.
         foreach (int index in slotIndices)
         {
-            Card card = GetCardAtIndex(index); // (방금 위에 추가한 헬퍼 함수)
+            Card card = GetCardAtIndex(index);
 
-            // 5) 슬롯이 비어있지 않은지 확인
             if (card != null)
             {
-                // 6) 카드에게 효과 적용 시도
-                // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 합니다!)
+                // 효과 적용 시도
                 if (card.ApplyStatusEffect(effectType, duration))
                 {
-                    // 7) 적용에 성공했으면, 카운트 1 증가
+                    // 성공 카운팅
                     successCount++;
                 }
             }
 
-            // 8) 목표한 횟수(count)만큼 성공했으면, 즉시 종료
+            // 종료
             if (successCount >= count)
             {
                 break;
@@ -289,11 +345,10 @@ public class MonsterController
         }
     }
 
-    // (카드들이 호출) 이 몬스터에게 DoT 중첩을 추가합니다.
-    public virtual void ApplyLordDoT(StatusEffectType effectType, int stacks)
+    // 스탯 중첩 추가
+    public virtual void ApplyLordStatus(StatusEffectType effectType, int stacks)
     {
         if (m_BattleManager.IsBattleEnded) return;
-
         switch (effectType)
         {
             case StatusEffectType.Bleed:
@@ -308,15 +363,32 @@ public class MonsterController
             case StatusEffectType.Heal:
                 HealStacks += stacks;
                 break;
+
+            // --- Buff/Debuff (지속시간) ---
+            case StatusEffectType.Shock: // 충격
+                m_IsShocked = true;
+                m_ShockTimer = Mathf.Max(m_ShockTimer, stacks); // 더 긴 시간으로 갱신
+                m_IsSturdy = false; // 견고 해제
+                m_SturdyTimer = 0f;
+                Debug.Log($"[플레이어] '감전' 효과! ({stacks}초)");
+                break;
+
+            case StatusEffectType.Sturdy: // 견고
+                m_IsSturdy = true;
+                m_SturdyTimer = Mathf.Max(m_SturdyTimer, stacks); // 더 긴 시간으로 갱신
+                m_IsShocked = false; // 감전 해제
+                m_ShockTimer = 0f;
+                Debug.Log($"[플레이어] '견고' 효과! ({stacks}초)");
+                break;
         }
         UpdateDoTUI(); // UI 업데이트
     }
 
-    // 특정 DoT 중첩을 '일정 수치(정수)'만큼 감소
-    public virtual void ReduceLordDoT(StatusEffectType effectType, int amount)
+
+    // 특정 상태 이상 중첩을 '일정 수치(정수)'만큼 감소
+    public virtual void ReduceLordStatus(StatusEffectType effectType, int amount)
     {
         if (m_BattleManager.IsBattleEnded) return;
-
         switch (effectType)
         {
             case StatusEffectType.Bleed:
@@ -335,11 +407,10 @@ public class MonsterController
         UpdateDoTUI(); // UI 업데이트
     }
 
-    // 특정 DoT 중첩을 '일정 퍼센트(%)'만큼 감소
-    public virtual void ReduceLordDoTPercent(StatusEffectType effectType, float percent)
+    // 특정 상태 이상 중첩을 '일정 퍼센트(%)'만큼 감소
+    public virtual void ReduceLordStatusPercent(StatusEffectType effectType, float percent)
     {
         if (m_BattleManager.IsBattleEnded) return;
-
         float clampedPercent = Mathf.Clamp01(percent);
         switch (effectType)
         {
@@ -359,8 +430,9 @@ public class MonsterController
         UpdateDoTUI(); // UI 업데이트
     }
 
+
     // --- 9. DoT 데미지 처리 ---
-    // 개별 타이머로 DoT 데미지를 계산하고 적용합니다.
+    // 개별 타이머로 DoT 데미지 계산 및 적용
     private void ProcessDoTs(float deltaTime)
     {
         if (m_BattleManager.IsBattleEnded) return;
@@ -420,6 +492,30 @@ public class MonsterController
                 AddHealth(healAmount); // 체력 추가 함수 호출
                 Debug.Log($"[HoT] 지속 회복으로 {healAmount} 회복!");
                 m_HealTickTimer = 2.0f; // 2초 타이머 초기화
+            }
+        }
+
+        // (5) 충격 타이머
+        if (m_IsShocked)
+        {
+            m_ShockTimer -= deltaTime;
+            if (m_ShockTimer <= 0f)
+            {
+                m_IsShocked = false;
+                Debug.Log("[플레이어] '감전' 상태 해제!");
+                // (나중에 UI가 있다면 UpdateStatusEffectUI() 호출)
+            }
+        }
+
+        // (6) 견고 타이머
+        if (m_IsSturdy)
+        {
+            m_SturdyTimer -= deltaTime;
+            if (m_SturdyTimer <= 0f)
+            {
+                m_IsSturdy = false;
+                Debug.Log("[플레이어] '견고' 상태 해제!");
+                // (나중에 UI가 있다면 UpdateStatusEffectUI() 호출)
             }
         }
     }
@@ -530,24 +626,39 @@ public class MonsterController
 
     public virtual void UpdateCardSlotUI(int index)
     {
-        // 1. 인덱스/데이터/UI 가져오기
+        // 인덱스/데이터/UI 가져오기
         if (index < 0 || index >= 7) return;
         Card cardData = m_Cards[index];
         VisualElement slotUI = Slots[index];
         if (slotUI == null) return;
 
-        // 2. 내부 UI 요소 찾기
+        // 내부 UI 요소
         VisualElement cooldownOverlay = m_CooldownOverlays[index];
         VisualElement roleUIContainer = m_RoleUIContainers[index];
         VisualElement cardImageLayer = m_CardImageLayers[index];
+        VisualElement costContainer = m_CostContainers[index];
+        Label costLabel = m_CostLabels[index];
 
-        // 3. 카드 데이터가 있으면 UI 업데이트
+        // 카드 데이터 UI 업데이트
         if (cardData != null)
         {
             // 카드 이미지
             if (cardImageLayer != null)
             {
                 cardImageLayer.style.backgroundImage = new StyleBackground(cardData.CardImage);
+            }
+
+            if (costContainer != null && costLabel != null)
+            {
+                if (cardData.CardPrice >= 0)
+                {
+                    costContainer.style.display = DisplayStyle.Flex;
+                    costLabel.text = cardData.CardPrice.ToString();
+                }
+                else
+                {
+                    costContainer.style.display = DisplayStyle.None;
+                }
             }
 
             // 쿨타임 UI
@@ -692,7 +803,7 @@ public class MonsterController
     }
 
     // --- 11. 카드 파괴 함수 ---
-    // 이 함수는 '전투 중' 파괴만 담당 : 다음 획득 전까지 영구적으로 사라지는 로직은 이곳이 아닌 메인 덱 리스트에서 이 카드를 제거함으로써 구현
+    // 이 함수는 전투 중 파괴만 담당 : 다음 획득 전까지 영구적으로 사라지는 로직은 이곳이 아닌 메인 덱 리스트에서 이 카드를 제거함으로써 구현
     public virtual void DestroyCard(int slotIndex)
     {
         if (slotIndex < 0 || slotIndex >= 7) return;
