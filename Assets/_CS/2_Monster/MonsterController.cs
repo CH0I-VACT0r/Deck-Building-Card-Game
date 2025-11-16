@@ -36,7 +36,7 @@ public class MonsterController
 
     // 툴팁 지연 실행 스케줄러 변수
     private IVisualElementScheduledItem m_TooltipScheduler;
-    private const long TOOLTIP_DELAY_MS = 400; // 0.4초 딜레이
+    private const long TOOLTIP_DELAY_MS = 300; // 0.4초 딜레이
 
     // 체력 및 쉴드 UI 요소
     private VisualElement m_HealthBarFill;
@@ -1044,6 +1044,10 @@ public class MonsterController
     public virtual void SetupDeck(string[] cardNames)
     {
         // (프로토타입용 하드코딩)
+        m_Cards[3] = CardFactory.CreateCard("goblin", this, 3);
+
+        // [신규!] 3번 슬롯 UI 업데이트 (이미지, 가격, 툴팁 등)
+        UpdateCardSlotUI(3);
         Debug.Log("[MonsterController] 테스트용 몬스터 덱([고블린]) 설정 완료.");
     }
 }

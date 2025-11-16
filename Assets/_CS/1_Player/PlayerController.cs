@@ -37,7 +37,7 @@ public class PlayerController
 
     // 툴팁 스케줄러 변수
     private IVisualElementScheduledItem m_TooltipScheduler;
-    private const long TOOLTIP_DELAY_MS = 400; // 0.4초
+    private const long TOOLTIP_DELAY_MS = 300; // 0.4초
 
     // 상태 패널 요소
     private VisualElement m_HealthBarFill;

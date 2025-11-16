@@ -13,15 +13,19 @@ public static class LocalizationManager
     private static Dictionary<string, string> m_KoreanDict = new Dictionary<string, string>()
     {
         // TODO: 여기에 모든 카드 텍스트 키 추가
+
+        // 툴팁 UI
         { "quest_status_complete", "완료" },
         { "quest_status_incomplete", "진행 중" },
         { "stat_crit_chance", "치명타 확률: {0}%" },
 
+        // 태그
         { "tag_mercenary", "용병" },
         { "tag_barbarian", "야만전사" },
         { "tag_dealer", "딜러" },
         { "tag_monster", "몬스터" },
         { "tag_beast", "야수" },
+        { "tag_goblin", "고블린" },
 
         // 바바리안 전사
         { "card_barbarian_warrior_name", "바바리안 전사" },
@@ -30,9 +34,10 @@ public static class LocalizationManager
         { "card_barbarian_warrior_quest_desc", "전투에서 3회 승리" },
         { "card_barbarian_warrior_flavor", "\"우어어어어어!!\"" },
 
+        // 고블린
         { "card_goblin_name", "고블린" },
-        { "card_goblin_skill_desc", "쿨타임마다 맞은편의 적을 공격하여 {0}의 피해를 줍니다." },
-        { "card_goblin_flavor", "\"키 작다고 얕보지 마라!\"" },
+        { "card_goblin_skill_desc", "쿨타임마다 {0}의 피해를 줍니다." },
+        { "card_goblin_flavor", "전형적인 고블린입니다." },
 
         
 
@@ -42,15 +47,18 @@ public static class LocalizationManager
     // 영어 사전 (en)
     private static Dictionary<string, string> m_EnglishDict = new Dictionary<string, string>()
     {
+        // 툴팁 UI
         { "quest_status_complete", "Complete" },
         { "quest_status_incomplete", "In Progress" },
         { "stat_crit_chance", "Crit Chance: {0}%" },
         
+        // 태그
         { "tag_mercenary", "Mercenary" },
         { "tag_barbarian", "Barbarian" },
         { "tag_dealer", "Dealer" },
         { "tag_monster", "Monster" },
         { "tag_beast", "Beast" },
+        { "tag_goblin", "Goblin" },
 
         // 바바리안 전사
         { "card_barbarian_warrior_name", "Barbarian Warrior" },
@@ -59,14 +67,13 @@ public static class LocalizationManager
         { "card_barbarian_warrior_quest_desc", "Win 3 battles" },
         { "card_barbarian_warrior_flavor", "\"Waaaaaaaaagh!!\"" },
 
+        // 고블린
         { "card_goblin_name", "Goblin" },
-        { "card_goblin_skill_desc", "Attacks the opposite enemy for {0} damage every cooldown." },
-        { "card_goblin_flavor", "\"Don't look down on me just because I'm short!\"" },
+        { "card_goblin_skill_desc", "Attacks {0} damage every cooldown." },
+        { "card_goblin_flavor", "A typical goblin." },
     };
 
-    /// <summary>
-    /// "키"를 주면 현재 언어에 맞는 "텍스트"를 반환합니다. (기본)
-    /// </summary>
+    // "키"를 주면 현재 언어에 맞는 "텍스트"를 반환합니다.
     public static string GetText(string key)
     {
         if (string.IsNullOrEmpty(key))
