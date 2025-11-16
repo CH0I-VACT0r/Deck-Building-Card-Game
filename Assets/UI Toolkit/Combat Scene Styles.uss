@@ -433,6 +433,34 @@ VisualElement {
     color: white;
     white-space: normal; /* 자동 줄바꿈 */
 }
+/* 쿨타임 텍스트 스타일 */
+.tooltip-cooldown {
+    font-size: 14px;
+    color: white;
+    -unity-font-style: bold;
+    margin-top: 4px;
+    display: none; 
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
+}
+/* 부가 스탯/효과 컨테이너 */
+.tooltip-stat-container {
+    /* C#이 Label을 추가할 공간 */
+    margin-top: 0px;
+    margin-bottom: 0px;
+    display: none; /* C#이 켤 때까지 숨김 */
+}
+
+/* C#이 동적으로 생성할 개별 스탯 라인 (예: "치명타: 10%") */
+.tooltip-stat-line {
+    font-size: 14px;
+    color: white;
+    white-space: normal;
+    margin-bottom: 2px;
+    -unity-font-style: bold;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
+}
 
 /* 5. 퀘스트/내구도 같은 섹션 컨테이너 */
 .tooltip-section-container {

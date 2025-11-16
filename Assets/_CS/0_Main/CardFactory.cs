@@ -16,6 +16,9 @@ public static class CardFactory
             case "barbarian_warrior":
                 return new Card_BarbarianWarrior(owner, index);
 
+            case "barbarian_shieldbearer":
+                return new Card_BarbarianShieldbearer(owner, index);
+
             // (나중에 추가...)
             // case "":
             //    if (playerOwner != null) return new ~~~ (playerOwner, index);

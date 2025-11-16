@@ -48,19 +48,39 @@ public abstract class Card
     public float FreezeDurationToApply { get; protected set; } = 0; // 빙결 적용
     public int PoisonStacksToApply { get; protected set; } = 0; // 중독 적용
     public int BurnStacksToApply { get; protected set; } = 0; // 화상 적용
+    public float HasteDurationToApply { get; protected set; } = 0f; // 가속 적용 (지속시간)
+    public float SlowDurationToApply { get; protected set; } = 0f;  // 감속 적용 (지속시간)
+    public float BaseCooldownReduction { get; protected set; } = 0f; // 촉진 스탯 (지속시간)
+    public float BaseCooldownIncrease { get; protected set; } = 0f; // 방해 스탯 (지속시간)
+    public int EchoStacksToApply { get; protected set; } = 0;     // 메아리 적용 (횟수)
+    public float ShockDurationToApply { get; protected set; } = 0f;    // 충격 적용 (지속시간)
+    public float SturdyDurationToApply { get; protected set; } = 0f;   // 견고 적용 (지속시간)
 
 
     public virtual int GetCurrentBleedStacks() { return this.BleedStacksToApply; }
     public virtual float GetCurrentFreezeDuration() { return this.FreezeDurationToApply; }
     public virtual int GetCurrentPoisonStacks() { return this.PoisonStacksToApply; }
     public virtual int GetCurrentBurnStacks() { return this.BurnStacksToApply; }
-
+    public virtual int GetCurrentEchoStacks() { return this.EchoStacksToApply; }
+    public virtual float GetCurrentShockDuration() { return this.ShockDurationToApply; }
+    public virtual float GetCurrentSturdyDuration() { return this.SturdyDurationToApply; }
 
     // --- [쿨타임 컨트롤] ---
+
     public virtual float GetCurrentCooldownTime()
     {
         return this.BaseCooldownTime;
     }
+    public virtual float GetCurrentHasteDuration()
+    {
+        return this.HasteDurationToApply;
+    }
+    public virtual float GetCurrentSlowDuration()
+    {
+        return this.SlowDurationToApply;
+    }
+    public virtual float GetCurrentCooldownReduction() { return this.BaseCooldownReduction; }
+    public virtual float GetCurrentCooldownIncrease() { return this.BaseCooldownIncrease; }
 
     private bool m_IsHasted = false; // 가속 여부
     private float m_HasteTimer = 0f; // 가속 타이머

@@ -21,8 +21,9 @@ public class PlayerController
     private VisualElement m_TooltipRoot;
     private Label m_TooltipName;
     private VisualElement m_TooltipTagContainer;
+    private Label m_TooltipCooldown;
     private Label m_TooltipSkillDesc;
-
+    private VisualElement m_TooltipStatContainer;
     private VisualElement m_TooltipQuestContainer;
     private Label m_TooltipQuestTitle;
     private Label m_TooltipQuestDesc;
@@ -32,8 +33,9 @@ public class PlayerController
     private Label m_TooltipCritChance;
     private VisualElement m_TooltipDurabilityContainer;
     private Label m_TooltipDurability;
-
     private Label m_TooltipFlavorText;
+    private VisualElement m_TooltipDivider1;
+    private VisualElement m_TooltipDivider2;
 
     // 툴팁 스케줄러 변수
     private IVisualElementScheduledItem m_TooltipScheduler;
@@ -116,19 +118,19 @@ public class PlayerController
             m_TooltipName = m_TooltipRoot.Q<Label>("TooltipName");
             m_TooltipTagContainer = m_TooltipRoot.Q<VisualElement>("TooltipTagContainer");
             m_TooltipSkillDesc = m_TooltipRoot.Q<Label>("TooltipSkillDesc");
-
+            m_TooltipCooldown = m_TooltipRoot.Q<Label>("TooltipCooldown");
             m_TooltipQuestContainer = m_TooltipRoot.Q<VisualElement>("TooltipQuestContainer");
             m_TooltipQuestTitle = m_TooltipRoot.Q<Label>("QuestName");
             m_TooltipQuestDesc = m_TooltipRoot.Q<Label>("TooltipQuestDesc");
             m_TooltipQuestStatus = m_TooltipRoot.Q<Label>("TooltipQuestStatus");
-
+            m_TooltipStatContainer = m_TooltipRoot.Q<VisualElement>("TooltipStatContainer");
             m_TooltipCritContainer = m_TooltipRoot.Q<VisualElement>("TooltipCritContainer");
             m_TooltipCritChance = m_TooltipRoot.Q<Label>("TooltipCritChance");
             m_TooltipDurabilityContainer = m_TooltipRoot.Q<VisualElement>("TooltipDurabilityContainer");
             m_TooltipDurability = m_TooltipRoot.Q<Label>("TooltipDurability");
-
             m_TooltipFlavorText = m_TooltipRoot.Q<Label>("TooltipFlavorText");
-
+            m_TooltipDivider1 = m_TooltipRoot.Q<VisualElement>("TooltipDivider1");
+            m_TooltipDivider2 = m_TooltipRoot.Q<VisualElement>("TooltipDivider2");
             m_TooltipRoot.style.display = DisplayStyle.None;
         }
         else
@@ -260,78 +262,113 @@ public class PlayerController
     // [실행] 스케줄러에 의해 딜레이 이후 실제 툴팁을 띄우는 함수
     private void ShowTooltip(Card card, VisualElement slotElement)
     {
-        // 혹시 모를 null 체크
+        // null 체크
         if (m_TooltipRoot == null || card == null || slotElement == null) return;
 
         // --- 카드 데이터로 툴팁 UI 내용 채우기 ---
         // 이름 (Key -> 번역)
         m_TooltipName.text = LocalizationManager.GetText(card.CardNameKey);
         // 태그 (동적 Label 생성)
-        m_TooltipTagContainer.Clear(); // 컨테이너 비우기
-        m_TooltipTagContainer.style.display = DisplayStyle.None; // 일단 숨기기
+        m_TooltipTagContainer.Clear();
+        m_TooltipTagContainer.style.display = DisplayStyle.None;
         if (card.TagKeys != null && card.TagKeys.Count > 0)
         {
             foreach (string tagKey in card.TagKeys)
             {
-                string translatedTag = LocalizationManager.GetText(tagKey); // 키 번역
-                Label tagLabel = new Label(translatedTag); // 새 라벨 생성
-                tagLabel.AddToClassList("tooltip-tag-label"); // USS 스타일 적용
-                m_TooltipTagContainer.Add(tagLabel); // 컨테이너에 추가
+                string translatedTag = LocalizationManager.GetText(tagKey);
+                Label tagLabel = new Label(translatedTag);
+                tagLabel.AddToClassList("tooltip-tag-label");
+                m_TooltipTagContainer.Add(tagLabel);
             }
-            m_TooltipTagContainer.style.display = DisplayStyle.Flex; // 컨테이너 보이기
+            m_TooltipTagContainer.style.display = DisplayStyle.Flex;
         }
 
-        // 스킬 설명 (Key -> 번역 + 실시간 수치 {0} 포맷팅)
-        m_TooltipSkillDesc.text = LocalizationManager.GetText(card.CardSkillDescriptionKey, card.GetCurrentDamage());
+        // --- 쿨타임 표시 (별도 라벨) ---
+        if (card.ShowCooldownUI && card.BaseCooldownTime > 0)
+        {
+            m_TooltipCooldown.text = LocalizationManager.GetText("stat_cooldown", card.BaseCooldownTime.ToString());
+            m_TooltipCooldown.style.display = DisplayStyle.Flex;
+        }
+        else
+        {
+            m_TooltipCooldown.style.display = DisplayStyle.None;
+        }
+        //  메인 스킬 설명
+        m_TooltipSkillDesc.text = LocalizationManager.GetText(card.CardSkillDescriptionKey);
+        // 부가 스탯/효과 목록
+        m_TooltipStatContainer.Clear();
+
+        System.Action<string, float> AddStatLine = (string key, float value) =>
+        {
+            if (value > 0)
+            {
+                Label line = new Label(LocalizationManager.GetText(key, value.ToString()));
+                line.AddToClassList("tooltip-stat-line");
+                m_TooltipStatContainer.Add(line);
+            }
+        };
+
+        // 모든 스탯 추가
+        AddStatLine("stat_damage", card.GetCurrentDamage());
+        AddStatLine("stat_shield", card.GetCurrentShield());
+        AddStatLine("stat_heal", card.GetCurrentHeal());
+        AddStatLine("stat_crit_chance", card.GetCurrentCritChance() * 100f);
+        AddStatLine("stat_apply_bleed", card.GetCurrentBleedStacks());
+        AddStatLine("stat_apply_poison", card.GetCurrentPoisonStacks());
+        AddStatLine("stat_apply_burn", card.GetCurrentBurnStacks());
+        AddStatLine("stat_apply_heal_dot", card.GetCurrentHealStacks());
+        AddStatLine("stat_apply_freeze", card.GetCurrentFreezeDuration());
+        AddStatLine("stat_apply_haste", card.GetCurrentHasteDuration());
+        AddStatLine("stat_apply_slow", card.GetCurrentSlowDuration());
+        AddStatLine("stat_apply_cooldown_reduction", card.GetCurrentCooldownReduction());
+        AddStatLine("stat_apply_cooldown_increase", card.GetCurrentCooldownIncrease());
+        AddStatLine("stat_apply_echo", card.GetCurrentEchoStacks());
+        AddStatLine("stat_apply_shock", card.GetCurrentShockDuration());
+        AddStatLine("stat_apply_sturdy", card.GetCurrentSturdyDuration());
+
+        // 컨테이너 보이기/숨기기
+        if (m_TooltipStatContainer.childCount > 0)
+        {
+            m_TooltipStatContainer.style.display = DisplayStyle.Flex;
+        }
+        else
+        {
+            m_TooltipStatContainer.style.display = DisplayStyle.None;
+        }
+
+        // --- [이하 동일] 퀘스트, 내구도, 플레이버 텍스트 ---
 
         // 퀘스트 (조건부 표시)
         if (card.HasQuest)
         {
             m_TooltipQuestTitle.text = LocalizationManager.GetText(card.QuestTitleKey);
             m_TooltipQuestDesc.text = LocalizationManager.GetText(card.QuestDescriptionKey);
-
             bool isDone = card.IsQuestComplete;
             string statusKey = isDone ? "quest_status_complete" : "quest_status_incomplete";
             m_TooltipQuestStatus.text = LocalizationManager.GetText(statusKey);
-
             m_TooltipQuestStatus.EnableInClassList("quest-status-complete", isDone);
             m_TooltipQuestStatus.EnableInClassList("quest-status-incomplete", !isDone);
-
-            m_TooltipQuestContainer.style.display = DisplayStyle.Flex; // 보이기
+            m_TooltipQuestContainer.style.display = DisplayStyle.Flex;
         }
         else
         {
-            m_TooltipQuestContainer.style.display = DisplayStyle.None; // 숨기기
-        }
-
-        // 크리티컬 확률 표기
-        float critChance = card.GetCurrentCritChance(); // (예: 0.15f)
-        if (critChance > 0)
-        {
-            // (0.15f -> 15f)로 변환해서 {0} 자리에 넘김
-            m_TooltipCritChance.text = LocalizationManager.GetText("stat_crit_chance", (critChance * 100f));
-            m_TooltipCritContainer.style.display = DisplayStyle.Flex; // 보이기
-        }
-        else
-        {
-            m_TooltipCritContainer.style.display = DisplayStyle.None; // 숨기기
+            m_TooltipQuestContainer.style.display = DisplayStyle.None;
         }
 
         // 내구도 (조건부 표시)
-        if (card.Durability > -1) // -1이 '무한 내구도'
+        if (card.Durability > -1)
         {
-            // (나중에 "내구도: {0}"도 번역 키로 뺄 수 있습니다)
-            m_TooltipDurability.text = $"내구도: {card.Durability}";
-            m_TooltipDurabilityContainer.style.display = DisplayStyle.Flex; // 보이기
+            m_TooltipDurability.text = LocalizationManager.GetText("stat_durability", card.Durability.ToString());
+            m_TooltipDurabilityContainer.style.display = DisplayStyle.Flex;
         }
         else
         {
-            m_TooltipDurabilityContainer.style.display = DisplayStyle.None; // 숨기기
+            m_TooltipDurabilityContainer.style.display = DisplayStyle.None;
         }
 
         // 플레이버 텍스트 (Key -> 번역)
         string flavor = LocalizationManager.GetText(card.FlavorTextKey);
-        if (!string.IsNullOrEmpty(flavor) && !flavor.StartsWith("[")) // (유효한 텍스트일 때만)
+        if (!string.IsNullOrEmpty(flavor) && !flavor.StartsWith("["))
         {
             m_TooltipFlavorText.text = $"\"{flavor}\"";
             m_TooltipFlavorText.style.display = DisplayStyle.Flex;
@@ -341,13 +378,28 @@ public class PlayerController
             m_TooltipFlavorText.style.display = DisplayStyle.None;
         }
 
+        //Divider1 (태그/쿨타임과 스킬설명 사이)
+        bool isTopSectionVisible = (m_TooltipTagContainer.style.display == DisplayStyle.Flex ||
+                                    m_TooltipCooldown.style.display == DisplayStyle.Flex);
+
+        m_TooltipDivider1.style.display = isTopSectionVisible ? DisplayStyle.Flex : DisplayStyle.None;
+
+        // Divider2 (부가 스탯/퀘스트/내구도와 플레이버 텍스트 사이)
+        bool isMidSectionVisible = (
+                                    m_TooltipQuestContainer.style.display == DisplayStyle.Flex ||
+                                    m_TooltipDurabilityContainer.style.display == DisplayStyle.Flex);
+
+        bool isFlavorTextVisible = (m_TooltipFlavorText.style.display == DisplayStyle.Flex);
+
+        m_TooltipDivider2.style.display = (isMidSectionVisible && isFlavorTextVisible) ? DisplayStyle.Flex : DisplayStyle.None;
+
         // --- 툴팁 위치 조절 (슬롯의 오른쪽 상단) ---
         Rect slotRect = slotElement.worldBound;
-        float offsetX = 10f; // 슬롯 우측에 10px 여백
+        float offsetX = 10f;
         m_TooltipRoot.style.left = slotRect.xMax + offsetX;
         m_TooltipRoot.style.top = slotRect.yMin;
 
-        // --- 3. 툴팁 UI를 '보이기'로 변경 ---
+        // ---  툴팁 UI---
         m_TooltipRoot.style.display = DisplayStyle.Flex;
     }
 

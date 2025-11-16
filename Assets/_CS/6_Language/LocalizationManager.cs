@@ -17,26 +17,49 @@ public static class LocalizationManager
         // 툴팁 UI
         { "quest_status_complete", "완료" },
         { "quest_status_incomplete", "진행 중" },
+        { "stat_cooldown", "쿨타임: {0}초" },
         { "stat_crit_chance", "치명타 확률: {0}%" },
+        { "stat_durability", "내구도: {0}" },
+        { "stat_damage", "피해량: {0}" },
+        { "stat_shield", "쉴드 획득: {0}" },
+        { "stat_heal", "체력 회복: {0}" },
+        { "stat_apply_bleed", "출혈 : {0}" },
+        { "stat_apply_poison", "중독 : {0}" },
+        { "stat_apply_burn", "화상 : {0}" },
+        { "stat_apply_heal_dot", "지속 회복 : {0}" },
+        { "stat_apply_freeze", "빙결 : {0}초" },
+        { "stat_apply_haste", "가속 : {0}초" },
+        { "stat_apply_slow", "감속 : {0}초" },
+        { "stat_apply_cooldown_reduction", "촉진 : {0}초" },
+        { "stat_apply_cooldown_increase", "방해 : {0}초" },
+        { "stat_apply_echo", "메아리 : {0}회" },
+        { "stat_apply_shock", "충격 : {0}초" },
+        { "stat_apply_sturdy", "견고 : {0}초" },
 
         // 태그
         { "tag_mercenary", "용병" },
-        { "tag_barbarian", "야만전사" },
         { "tag_dealer", "딜러" },
-        { "tag_monster", "몬스터" },
+        { "tag_tanker", "탱커" },
+        { "tag_barbarian", "야만전사" },
         { "tag_beast", "야수" },
+        { "tag_monster", "몬스터" },
         { "tag_goblin", "고블린" },
 
-        // 바바리안 전사
-        { "card_barbarian_warrior_name", "바바리안 전사" },
-        { "card_barbarian_warrior_skill_desc", "쿨타임마다 {0}의 피해를 줍니다." },
+        // 야만전사 전투병
+        { "card_barbarian_warrior_name", "야만전사 전투병" },
+        { "card_barbarian_warrior_skill_desc", "도끼로 상대를 공격합니다." },
         { "card_barbarian_warrior_quest_title", "[이기자!]" },
         { "card_barbarian_warrior_quest_desc", "전투에서 3회 승리" },
         { "card_barbarian_warrior_flavor", "\"우어어어어어!!\"" },
 
+        // 야만전사 방패병
+        { "card_barbarianshield_name", "야만전사 방패병" },
+        { "card_barbarianshield_skill_desc", "방패를 들어 쉴드를 얻습니다." },
+        { "card_barbarianshield_flavor", "\"넌 못 지나간다!\"" },
+
         // 고블린
         { "card_goblin_name", "고블린" },
-        { "card_goblin_skill_desc", "쿨타임마다 {0}의 피해를 줍니다." },
+        { "card_goblin_skill_desc", "상대를 공격합니다." },
         { "card_goblin_flavor", "전형적인 고블린입니다." },
 
         
@@ -50,7 +73,24 @@ public static class LocalizationManager
         // 툴팁 UI
         { "quest_status_complete", "Complete" },
         { "quest_status_incomplete", "In Progress" },
+        { "stat_cooldown", "Cooldown: {0}s" },
         { "stat_crit_chance", "Crit Chance: {0}%" },
+        { "stat_durability", "Durability: {0}" },
+        { "stat_damage", "Damage: {0}" },
+        { "stat_shield", "Shield: {0}" },
+        { "stat_heal", "Heal: {0}" },
+        { "stat_apply_bleed", "Bleed: {0}" },
+        { "stat_apply_poison", "Poison: {0}" },
+        { "stat_apply_burn", "Burn: {0}" },
+        { "stat_apply_heal_dot", "Regen: {0}" },
+        { "stat_apply_freeze", "Freeze: {0}s" },
+        { "stat_apply_haste", "Haste: {0}s" },
+        { "stat_apply_slow", "Slow: {0}s" },
+        { "stat_apply_cooldown_reduction", "Stimulate : {0}s" },
+        { "stat_apply_cooldown_increase", "Hider : {0}s" },
+        { "stat_apply_echo", "Echo: {0}" },
+        { "stat_apply_shock", "Shock: {0}s" },
+        { "stat_apply_sturdy", "Sturdy: {0}s" },
         
         // 태그
         { "tag_mercenary", "Mercenary" },
@@ -60,16 +100,21 @@ public static class LocalizationManager
         { "tag_beast", "Beast" },
         { "tag_goblin", "Goblin" },
 
-        // 바바리안 전사
+        // 야만전사 전투병
         { "card_barbarian_warrior_name", "Barbarian Warrior" },
-        { "card_barbarian_warrior_skill_desc", "Deals {0} damage every cooldown." },
+        { "card_barbarian_warrior_skill_desc", "Attack the opponent with an ax." },
         { "card_barbarian_warrior_quest_title", "[Let's Win!]" },
         { "card_barbarian_warrior_quest_desc", "Win 3 battles" },
         { "card_barbarian_warrior_flavor", "\"Waaaaaaaaagh!!\"" },
 
+        // 야만전사 방패병
+        { "card_barbarianshield_name", "Barbarian Shieldbearer" },
+        { "card_barbarianshield_skill_desc", "Lift the shield" },
+        { "card_barbarianshield_flavor", "\"You shall not pass!\"" },
+
         // 고블린
         { "card_goblin_name", "Goblin" },
-        { "card_goblin_skill_desc", "Attacks {0} damage every cooldown." },
+        { "card_goblin_skill_desc", "Attack the opponent" },
         { "card_goblin_flavor", "A typical goblin." },
     };
 
