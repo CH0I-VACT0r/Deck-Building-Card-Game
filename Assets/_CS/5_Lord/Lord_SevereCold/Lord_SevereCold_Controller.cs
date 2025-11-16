@@ -92,7 +92,7 @@ public class Lord_SevereCold_Controller : PlayerController
         // (나중에는 이 'testDeck' 배열이 '전략 씬'에서 넘어옵니다)
         string[] testDeck = new string[]
         {
-            "BarbarianWarrior",    // 1번 슬롯 (인덱스 0)
+            "barbarian_warrior",    // 1번 슬롯 (인덱스 0)
             null,             // 2번 슬롯 (비어있음)
             null,             // 3번 슬롯
             null,             // 4번 슬롯

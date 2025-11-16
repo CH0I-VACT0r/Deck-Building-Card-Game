@@ -1,122 +1,82 @@
-// 파일명: Card_BarbarianWarrior.cs
 using UnityEngine;
-using System.Collections.Generic; // [신규!] List 사용을 위해 추가
 
 /// <summary>
-/// [바바리안 전투병] - (촉진/방해/치명타 테스트 버전)
-/// 7초마다 스킬 발동 시:
-/// 1. [치명타]: 50% 확률로 2배 피해
-/// 2. [촉진]: '자신'의 쿨타임을 2초 즉시 감소
-/// 3. [방해]: '무작위 적 1장'의 쿨타임을 2초 즉시 증가
+/// 카드: 바바리안 전사
 /// </summary>
-public class Card_BarbarianWarrior : Card // Card 뼈대를 상속
+public class Card_BarbarianWarrior : Card
 {
-    // --- 1. 전투병의 고유 스탯 ---
-    private const float COOLDOWN = 3f;
-
-    // 테스트용 스탯
-    private float m_ReduceCooldownAmount = 2.0f; // 2초 촉진
-    private float m_IncreaseCooldownAmount = 2.0f; // 2초 방해
-    private int m_IncreaseTargetCount = 1;     // 1명 대상
-
-    // --- 2. 생성자 ---
-    public Card_BarbarianWarrior(PlayerController owner, int index)
-        : base(owner, index, COOLDOWN)
+    // --- 생성자 ---
+    public Card_BarbarianWarrior(object owner, int index)
+        : base(owner, index, 7.0f) // 부모(Card) 생성자 호출 (쿨타임 7.0초)
     {
-        this.CardName = "바바리안 전투병 (촉진/방해 테스트)";
+        // --- 1. 기본 정보 설정 (키 할당) ---
+        this.CardNameKey = "card_barbarian_warrior_name";
+        // (TODO: "CardImages/BarbarianWarrior" 경로에 실제 이미지 파일이 있어야 합니다)
+        this.CardImage = Resources.Load<Sprite>("CardImages/Lord_SevereCold/Barbarian_Warrior");
+        this.CardPrice = 3; // (가격은 임의로 15로 설정)
         this.Rarity = CardRarity.Bronze;
 
-        // [역할 데이터]
-        this.BaseDamage = 1f; // 기본 피해량 20
-        this.BaseCritChance = 0.5f; // 치명타 확률 50%
+        // --- 2. 태그 키 할당 ---
+        this.TagKeys.Add("tag_mercenary");
+        this.TagKeys.Add("tag_barbarian");
+        this.TagKeys.Add("tag_dealer");
 
-        this.CardImage = Resources.Load<Sprite>("CardImages/Lord_SevereCold/Barbarian_Warrior");
+        // --- 3. 툴팁 정보 설정 (키 할당) ---
+        this.CardSkillDescriptionKey = "card_barbarian_warrior_skill_desc";
+        this.FlavorTextKey = "card_barbarian_warrior_flavor";
 
-        this.Tags.Add("#북방 야만전사");
-        this.Tags.Add("#어태커");
+        // --- 4. 퀘스트 정보 설정 ---
+        this.HasQuest = true;
+        this.QuestTitleKey = "card_barbarian_warrior_quest_title";
+        this.QuestDescriptionKey = "card_barbarian_warrior_quest_desc";
+        this.IsQuestComplete = false; // (전투 3회 승리 여부는 다른 시스템이 관리해야 함)
+
+        // --- 5. 내구도 ---
+        this.Durability = -1; // 무한 내구도
+
+        // --- 6. 스탯 설정 (스킬 로직 및 툴팁용) ---
+        this.BaseDamage = 20f;
+        this.BaseCritChance = 0.1f; // 10%
     }
 
-    // --- 3. 핵심 스킬 로직 (수정!) ---
+    // --- 7. 스킬 로직 구현 ---
     public override void ExecuteSkill()
     {
-        // 1. 주인 및 타겟 확인
+        // 1. 실시간 피해량 계산 (버프 + 치명타 포함)
+        float realDamage = GetCurrentDamage() * CheckForCrit();
+
+        // 2. 주인(Owner)이 플레이어인지 몬스터인지 확인
         PlayerController playerOwner = m_Owner as PlayerController;
-        if (playerOwner == null) return;
-        MonsterController target = playerOwner.GetTarget();
-        if (target == null) return;
+        MonsterController monsterOwner = m_Owner as MonsterController;
 
-        // --- [로직 1: 치명타] ---
-        float critMultiplier = CheckForCrit();
-        float damageToDeal = this.BaseDamage * critMultiplier;
-        target.TakeDamage(damageToDeal);
-
-        // --- [로직 2: 셀프 촉진] ---
-        this.ReduceCooldown(m_ReduceCooldownAmount);
-
-        // --- [로직 3: 적 방해] (수정됨!) ---
-
-        // 3a. 적의 '활성화된' 카드 목록을 만듭니다. (중요: 루프 밖으로 이동)
-        List<Card> activeEnemyCards = new List<Card>();
-        for (int i = 0; i < 7; i++)
+        // 3. 타겟에게 피해 입히기
+        if (playerOwner != null)
         {
-            Card enemyCard = target.GetCardAtIndex(i);
-            if (enemyCard != null)
-            {
-                activeEnemyCards.Add(enemyCard);
-            }
+            // 내가 플레이어 소속이면, 타겟(몬스터)을 공격
+            playerOwner.GetTarget()?.TakeDamage(realDamage);
+        }
+        else if (monsterOwner != null)
+        {
+            // 내가 몬스터 소속이면, 타겟(플레이어)을 공격
+            monsterOwner.GetTarget()?.TakeDamage(realDamage);
         }
 
-        // [신규!] m_IncreaseTargetCount (1) 만큼 반복합니다.
-        for (int i = 0; i < m_IncreaseTargetCount; i++)
-        {
-            // 3b. 방해할 대상이 남아있는지 확인합니다.
-            if (activeEnemyCards.Count > 0)
-            {
-                // 3c. 1명을 무작위로 고릅니다.
-                int randomIndex = Random.Range(0, activeEnemyCards.Count);
-                Card targetCard = activeEnemyCards[randomIndex];
-
-                // 3d. 쿨타임을 2초 늘립니다.
-                targetCard.IncreaseCooldown(m_IncreaseCooldownAmount);
-                Debug.Log($"... [{this.CardName}] (이)가 적 [{targetCard.CardName}] 쿨타임 {m_IncreaseCooldownAmount}초 '방해'!");
-
-                // 3e. [중요!] 중복으로 방해하지 않도록, 목록에서 제거합니다.
-                activeEnemyCards.RemoveAt(randomIndex);
-            }
-            else
-            {
-                // 방해할 카드가 더 이상 없으면 루프를 중단합니다.
-                break;
-            }
-        }
-
-        // 4. (디버그 로그)
-        Debug.Log($"[{this.CardName}] 스킬! -> 몬스터에게 {damageToDeal} 피해, " +
-                  $"자신 '촉진'({m_ReduceCooldownAmount}s)!");
-
-        // --- (삭제!) ---
-        // (가속, 감속, 메아리 로직 삭제됨)
+        Debug.Log($"[{this.CardNameKey}] 스킬 발동! {realDamage} 피해!");
     }
 
-    // --- 4. GetCurrentCritChance (아우라 테스트용) ---
-    // (이 카드는 '아우라'를 받을 수 있습니다)
+    // --- 8. 실시간 스탯 계산 (툴팁용) ---
+
+    // 툴팁이 GetCurrentDamage()를 호출할 때 이 함수가 실행됨
+    public override float GetCurrentDamage()
+    {
+        // TODO: 나중에 이 카드에 버프가 걸리면 여기서 계산
+        // (예: return this.BaseDamage + m_BuffAmount;)
+        return this.BaseDamage;
+    }
+
+    // 툴팁이 GetCurrentCritChance()를 호출할 때 이 함수가 실행됨
     public override float GetCurrentCritChance()
     {
-        float totalCrit = this.BaseCritChance;
-        PlayerController playerOwner = m_Owner as PlayerController;
-        if (playerOwner == null) return totalCrit;
-
-        Card leftCard = playerOwner.GetLeftNeighbor(this.SlotIndex);
-        if (leftCard != null)
-        {
-            totalCrit += leftCard.GetAuraBuffTo(this, "CritChance");
-        }
-        Card rightCard = playerOwner.GetRightNeighbor(this.SlotIndex);
-        if (rightCard != null)
-        {
-            totalCrit += rightCard.GetAuraBuffTo(this, "CritChance");
-        }
-
-        return totalCrit;
+        return this.BaseCritChance;
     }
 }

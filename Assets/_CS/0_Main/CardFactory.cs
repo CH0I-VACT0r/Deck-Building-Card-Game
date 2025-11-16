@@ -13,26 +13,27 @@ public static class CardFactory
         switch (cardID)
         {
             // --- '혹한의 성주' 카드들 ---
-            case "BarbarianWarrior":
-                if (playerOwner != null)
-                    return new Card_BarbarianWarrior(playerOwner, index);
-                break;
+            case "barbarian_warrior":
+                return new Card_BarbarianWarrior(owner, index);
 
-            case "Shieldbearer":
-                if (playerOwner != null)
-                    return new Card_Shieldbearer(playerOwner, index);
-                break;
+                // (나중에 추가...)
+                // case "":
+                //    if (playerOwner != null) return new ~~~ (playerOwner, index);
+                //    break;
 
-            // (나중에 추가...)
-            // case "":
-            //    if (playerOwner != null) return new ~~~ (playerOwner, index);
-            //    break;
 
-            // --- '몬스터' 카드들 ---
-            case "Goblin":
-                if (monsterOwner != null)
-                    return new Card_Goblin(monsterOwner, index);
-                break;
+                // --- '제국의 성주' 카드들 ---
+
+
+                // --- '진보의 성주' 카드들
+
+
+                // --- '자연의 성주' 카드들 ---
+
+
+
+                // --- '몬스터' 카드들 ---
+
         }
 
         // 덱 설정이 잘못되었거나, 알 수 없는 ID일 경우

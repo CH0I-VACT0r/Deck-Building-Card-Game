@@ -17,6 +17,28 @@ public class PlayerController
     protected VisualElement m_StatusPanel; // 상태 패널 UI
     public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7); // 7개의 카드 슬롯 UI 요소 리스트
 
+    // 툴팁 UI 요소
+    private VisualElement m_TooltipRoot;
+    private Label m_TooltipName;
+    private VisualElement m_TooltipTagContainer;
+    private Label m_TooltipSkillDesc;
+
+    private VisualElement m_TooltipQuestContainer;
+    private Label m_TooltipQuestTitle;
+    private Label m_TooltipQuestDesc;
+    private Label m_TooltipQuestStatus;
+
+    private VisualElement m_TooltipCritContainer;
+    private Label m_TooltipCritChance;
+    private VisualElement m_TooltipDurabilityContainer;
+    private Label m_TooltipDurability;
+
+    private Label m_TooltipFlavorText;
+
+    // 툴팁 스케줄러 변수
+    private IVisualElementScheduledItem m_TooltipScheduler;
+    private const long TOOLTIP_DELAY_MS = 400; // 0.4초
+
     // 상태 패널 요소
     private VisualElement m_HealthBarFill;
     private VisualElement m_ShieldBarFill;
@@ -86,6 +108,34 @@ public class PlayerController
         this.m_PlayerParty = VisualElement.Q<VisualElement>("PlayerParty");
         this.m_StatusPanel = VisualElement.Q<VisualElement>("PlayerStatus");
 
+        // TooltipRoot와 그 자식들 쿼리
+        m_TooltipRoot = VisualElement.Q<VisualElement>("TooltipRoot");
+        if (m_TooltipRoot != null)
+        {
+            // UXML의 Name 확인
+            m_TooltipName = m_TooltipRoot.Q<Label>("TooltipName");
+            m_TooltipTagContainer = m_TooltipRoot.Q<VisualElement>("TooltipTagContainer");
+            m_TooltipSkillDesc = m_TooltipRoot.Q<Label>("TooltipSkillDesc");
+
+            m_TooltipQuestContainer = m_TooltipRoot.Q<VisualElement>("TooltipQuestContainer");
+            m_TooltipQuestTitle = m_TooltipRoot.Q<Label>("QuestName");
+            m_TooltipQuestDesc = m_TooltipRoot.Q<Label>("TooltipQuestDesc");
+            m_TooltipQuestStatus = m_TooltipRoot.Q<Label>("TooltipQuestStatus");
+
+            m_TooltipCritContainer = m_TooltipRoot.Q<VisualElement>("TooltipCritContainer");
+            m_TooltipCritChance = m_TooltipRoot.Q<Label>("TooltipCritChance");
+            m_TooltipDurabilityContainer = m_TooltipRoot.Q<VisualElement>("TooltipDurabilityContainer");
+            m_TooltipDurability = m_TooltipRoot.Q<Label>("TooltipDurability");
+
+            m_TooltipFlavorText = m_TooltipRoot.Q<Label>("TooltipFlavorText");
+
+            m_TooltipRoot.style.display = DisplayStyle.None;
+        }
+        else
+        {
+            Debug.LogError("[PlayerController] 'TooltipRoot'를 UXML에서 찾을 수 없습니다!");
+        }
+
         // 2. 카드 슬롯(CardSlot1 ~ CardSlot7) 찾기
         Slots.Clear();
         m_RoleUIContainers.Clear();
@@ -106,6 +156,11 @@ public class PlayerController
                 m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
                 m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
                 m_CostLabels.Add(slot.Q<Label>("CostLabel"));
+
+                // 마우스 이벤트 등록
+                int currentIndex = i;
+                slot.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterSlot(currentIndex, evt));
+                slot.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveSlot());
             }
             else
             {
@@ -170,6 +225,130 @@ public class PlayerController
         }
         // DoT 데미지 타이머
         ProcessDoTs(deltaTime);
+    }
+
+    // [이벤트] 카드 슬롯에 마우스가 들어왔을 때 호출
+    private void OnPointerEnterSlot(int slotIndex, PointerEnterEvent evt)
+    {
+        // 해당 슬롯에 카드가 있는지 확인
+        Card card = GetCardAtIndex(slotIndex);
+        if (card == null) return; // 카드가 없으면 무시
+
+        // 이전에 예약된 툴팁 스케줄이 있다면 취소
+        m_TooltipScheduler?.Pause();
+
+        // 'TOOLTIP_DELAY_MS' 밀리초 후 ShowTooltip 함수 실행
+        VisualElement slotElement = evt.currentTarget as VisualElement;
+        m_TooltipScheduler = slotElement.schedule
+            .Execute(() => ShowTooltip(card, slotElement))
+            .StartingIn(TOOLTIP_DELAY_MS);
+    }
+
+    // [이벤트] 카드 슬롯에서 마우스가 나갔을 때 호출
+    private void OnPointerLeaveSlot()
+    {
+        // 예약되어 있던 툴팁 스케줄 즉시 취소
+        m_TooltipScheduler?.Pause();
+
+        // 2. 툴팁 UI 즉시 숨김
+        if (m_TooltipRoot != null)
+        {
+            m_TooltipRoot.style.display = DisplayStyle.None;
+        }
+    }
+
+    // [실행] 스케줄러에 의해 딜레이 이후 실제 툴팁을 띄우는 함수
+    private void ShowTooltip(Card card, VisualElement slotElement)
+    {
+        // 혹시 모를 null 체크
+        if (m_TooltipRoot == null || card == null || slotElement == null) return;
+
+        // --- 카드 데이터로 툴팁 UI 내용 채우기 ---
+        // 이름 (Key -> 번역)
+        m_TooltipName.text = LocalizationManager.GetText(card.CardNameKey);
+        // 태그 (동적 Label 생성)
+        m_TooltipTagContainer.Clear(); // 컨테이너 비우기
+        m_TooltipTagContainer.style.display = DisplayStyle.None; // 일단 숨기기
+        if (card.TagKeys != null && card.TagKeys.Count > 0)
+        {
+            foreach (string tagKey in card.TagKeys)
+            {
+                string translatedTag = LocalizationManager.GetText(tagKey); // 키 번역
+                Label tagLabel = new Label(translatedTag); // 새 라벨 생성
+                tagLabel.AddToClassList("tooltip-tag-label"); // USS 스타일 적용
+                m_TooltipTagContainer.Add(tagLabel); // 컨테이너에 추가
+            }
+            m_TooltipTagContainer.style.display = DisplayStyle.Flex; // 컨테이너 보이기
+        }
+
+        // 스킬 설명 (Key -> 번역 + 실시간 수치 {0} 포맷팅)
+        m_TooltipSkillDesc.text = LocalizationManager.GetText(card.CardSkillDescriptionKey, card.GetCurrentDamage());
+
+        // 퀘스트 (조건부 표시)
+        if (card.HasQuest)
+        {
+            m_TooltipQuestTitle.text = LocalizationManager.GetText(card.QuestTitleKey);
+            m_TooltipQuestDesc.text = LocalizationManager.GetText(card.QuestDescriptionKey);
+
+            bool isDone = card.IsQuestComplete;
+            string statusKey = isDone ? "quest_status_complete" : "quest_status_incomplete";
+            m_TooltipQuestStatus.text = LocalizationManager.GetText(statusKey);
+
+            m_TooltipQuestStatus.EnableInClassList("quest-status-complete", isDone);
+            m_TooltipQuestStatus.EnableInClassList("quest-status-incomplete", !isDone);
+
+            m_TooltipQuestContainer.style.display = DisplayStyle.Flex; // 보이기
+        }
+        else
+        {
+            m_TooltipQuestContainer.style.display = DisplayStyle.None; // 숨기기
+        }
+
+        // 크리티컬 확률 표기
+        float critChance = card.GetCurrentCritChance(); // (예: 0.15f)
+        if (critChance > 0)
+        {
+            // (0.15f -> 15f)로 변환해서 {0} 자리에 넘김
+            m_TooltipCritChance.text = LocalizationManager.GetText("stat_crit_chance", (critChance * 100f));
+            m_TooltipCritContainer.style.display = DisplayStyle.Flex; // 보이기
+        }
+        else
+        {
+            m_TooltipCritContainer.style.display = DisplayStyle.None; // 숨기기
+        }
+
+        // 내구도 (조건부 표시)
+        if (card.Durability > -1) // -1이 '무한 내구도'
+        {
+            // (나중에 "내구도: {0}"도 번역 키로 뺄 수 있습니다)
+            m_TooltipDurability.text = $"내구도: {card.Durability}";
+            m_TooltipDurabilityContainer.style.display = DisplayStyle.Flex; // 보이기
+        }
+        else
+        {
+            m_TooltipDurabilityContainer.style.display = DisplayStyle.None; // 숨기기
+        }
+
+        // 플레이버 텍스트 (Key -> 번역)
+        string flavor = LocalizationManager.GetText(card.FlavorTextKey);
+        if (!string.IsNullOrEmpty(flavor) && !flavor.StartsWith("[")) // (유효한 텍스트일 때만)
+        {
+            m_TooltipFlavorText.text = $"\"{flavor}\"";
+            m_TooltipFlavorText.style.display = DisplayStyle.Flex;
+        }
+        else
+        {
+            m_TooltipFlavorText.style.display = DisplayStyle.None;
+        }
+
+        // --- 툴팁 위치 조절 (슬롯의 오른쪽 상단) ---
+        Rect slotRect = slotElement.worldBound;
+        float offsetX = 10f; // 슬롯 우측에 10px 여백
+        m_TooltipRoot.style.left = slotRect.xMax + offsetX;
+        m_TooltipRoot.style.top = slotRect.yMin;
+
+        // --- 3. 툴팁 UI를 '보이기'로 변경 ---
+        m_TooltipRoot.style.display = DisplayStyle.Flex;
     }
 
     /// (공통) 몬스터가 나를 공격할 때 호출하는 함수
@@ -876,7 +1055,7 @@ public class PlayerController
         Card cardToDestroy = m_Cards[slotIndex];
         if (cardToDestroy != null)
         {
-            Debug.Log($"[{cardToDestroy.CardName}] (이)가 파괴되었습니다!");
+            Debug.Log($"[{cardToDestroy.CardNameKey}] (이)가 파괴되었습니다!");
             cardToDestroy.OnDestroyed();
             // 1. C# 배열에서 카드를 제거 (null로 만듦)
             m_Cards[slotIndex] = null;
@@ -921,7 +1100,7 @@ public class PlayerController
         //UI 업데이트
         UpdateCardSlotUI(emptySlotIndex);
 
-        Debug.Log($"[{newCard.CardName}] (이)가 {emptySlotIndex}번 슬롯에 성공적으로 소환되었습니다!");
+        Debug.Log($"[{newCard.CardNameKey}] (이)가 {emptySlotIndex}번 슬롯에 성공적으로 소환되었습니다!");
         return true;
     }
 

@@ -353,14 +353,136 @@ VisualElement {
 /* 가격 숫자 텍스트 (라벨) */
 .cost-label {
     position: absolute;
-    left: 3;
+    left: 3px;
     right: 0;
     top: 0;
-    bottom: 1;
+    bottom: 1px;
     font-size: 15px;
     color: white;
     -unity-font-style: bold;
     -unity-text-outline-width: 1px;
     -unity-text-outline-color: black;
     -unity-text-align: middle-center;
+}
+
+/* ==================================== */
+/* 2. 카드 툴팁 (Tooltip) 스타일 */
+/* ==================================== */
+
+.tooltip-root {
+    /* C#이 위치를 제어할 수 있게 하고, 항상 위에 뜨도록 설정 */
+    position: absolute;
+    display: none;
+    
+    /* 디자인 */
+    background-color: rgba(0, 0, 0, 0.85); /* 어두운 반투명 배경 */
+    border-color: white;
+    border-width: 2px;
+    border-radius: 5px;
+    padding: 10px 12px; /* 위아래 10, 좌우 12 */
+    
+    /* 툴팁의 최소/최대 넓이 지정 */
+    width: 320px;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+/* 1. 카드 이름 */
+.tooltip-name {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: white; 
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
+}
+
+/* 2. 태그 컨테이너 */
+.tooltip-tag-container {
+    flex-direction: row;
+    flex-wrap: wrap; /* 태그가 많으면 줄바꿈 */
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* (C#에서 동적으로 생성할 개별 태그 라벨의 스타일) */
+.tooltip-tag-label {
+    background-color: rgb(50, 50, 50);
+    border-color: #888;
+    border-width: 1px;
+    border-radius: 3px;
+    padding: 2px 4px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    font-size: 14px;
+    color: white;
+    
+}
+
+/* 3. 구분선 */
+.tooltip-divider {
+    height: 1px;
+    background-color: #555;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+/* 4. 스킬 설명 */
+.tooltip-skill-desc {
+    font-size: 14px;
+    color: white;
+    white-space: normal; /* 자동 줄바꿈 */
+}
+
+/* 5. 퀘스트/내구도 같은 섹션 컨테이너 */
+.tooltip-section-container {
+    display: none;
+    margin-top: 5px;
+}
+
+/* 6. 퀘스트 가로 배치용 스타일 */
+.tooltip-quest-row {
+    flex-direction: row;
+    justify-content: space-between; /* 양쪽 끝으로 밀착 */
+    align-items: center;
+}
+
+/* 7. 퀘스트 제목 (예: [퀘스트]) */
+.tooltip-section-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #AAA;
+    margin-right: 10px; /* 제목과 설명 사이 여백 */
+}
+
+/* 8. 퀘스트 설명, 내구도 텍스트 */
+.tooltip-section-desc {
+    flex-grow: 1; /* 남는 공간 다 차지 (설명) */
+    font-size: 13px;
+    color: white;
+    white-space: normal;
+}
+
+/* 9. 퀘스트 완료 상태 (오른쪽) */
+.tooltip-quest-status {
+    flex-shrink: 0; 
+    margin-left: 10px;
+    -unity-font-style: bold;
+}
+
+/* C#이 제어할 퀘스트 색상 */
+.quest-status-complete {
+    color: #4CAF50; /* 녹색 */
+}
+.quest-status-incomplete {
+    color: #FFC107; /* 노란색 */
+}
+
+/* 10. 플레이버 텍스트 */
+.tooltip-flavor-text {
+    font-size: 13px;
+    color: #BBB;
+    -unity-font-style: italic; /* 이탤릭체 */
+    white-space: normal;
+    margin-top: 5px;
 }

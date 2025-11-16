@@ -7,32 +7,41 @@ public abstract class Card
 {
     // 1. 공통 데이터 
     // 모든 카드가 공통적으로 가지는 속성
-    public string CardName { get; protected set; } // 카드 이름
-    public Sprite CardImage { get; protected set; } // 카드 이미지
-    public CardRarity Rarity { get; protected set; } // 카드 등급
-    public int CardPrice { get; protected set; } = 0; // 카드 가격
-    public LordType OwnerLord { get; protected set; } = LordType.Common;  // 소속 영주
-    public float BaseCooldownTime { get; protected set; } // 카드의 기본 스킬 쿨타임 (초)
-    public float CurrentCooldown { get; set; } // 현재 남은 쿨타임. 0이 되면 스킬 발동
-    protected object m_Owner; // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
-    public int SlotIndex { get; private set; } // 카드가 몇 번 슬롯에 있는지
-    public int Durability { get; protected set; } = -1; // 내구도
-    protected int InnateEchoCount { get; set; } = 1;  // 기본 시전 횟수
-    private int m_BonusEchoStacks = 0; // 추가 시전 횟수 변수
-    public bool ShowCooldownUI { get; protected set; } = true; // 쿨타운 UI 표기 여부 : 패시브 스킬만 있는 카드는 표기 안 함
+    public string CardNameKey { get; protected set; }                         // 카드 이름
+    public Sprite CardImage { get; protected set; }                           // 카드 이미지
+    public List<string> TagKeys { get; protected set; } = new List<string>(); // 카드 태그 키
+    public CardRarity Rarity { get; protected set; }                          // 카드 등급
+    public int CardPrice { get; protected set; } = 0;                         // 카드 가격
+    public LordType OwnerLord { get; protected set; } = LordType.Common;      // 소속 영주
+    public float BaseCooldownTime { get; protected set; }                     // 카드의 기본 스킬 쿨타임 (초)
+    public float CurrentCooldown { get; set; }                                // 현재 남은 쿨타임. 0이 되면 스킬 발동
+    protected object m_Owner;                                                 // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
+    public int SlotIndex { get; private set; }                                // 카드 슬롯 인덱스
+    public int Durability { get; protected set; } = -1;                       // 내구도
+    protected int InnateEchoCount { get; set; } = 1;                          // 기본 스킬 시전 횟수
+    private int m_BonusEchoStacks = 0;                                        // 추가 시전 횟수 변수
+    public bool ShowCooldownUI { get; protected set; } = true;                // 쿨타운 UI 표기 여부 : 패시브 스킬만 있는 카드는 표기 안 함
+
+    // 툴팁
+    public string CardSkillDescriptionKey { get; protected set; } = "";  // 카드 스킬 설명
+    public bool HasQuest { get; protected set; } = false;                // 퀘스트 여부
+    public string QuestTitleKey { get; protected set; } = "";            // 퀘스트 이름
+    public string QuestDescriptionKey { get; protected set; } = "";      // 퀘스트 설명
+    public bool IsQuestComplete { get; protected set; } = false;         // 퀘스트 달성 여부
+    public string FlavorTextKey { get; protected set; } = "";            // 카드 플레이버 텍스트
 
     // 역할 UI - [기본]
-    public float BaseDamage { get; protected set; } = 0;   // 기본 대미지
-    public float BaseShield { get; protected set; } = 0;   // 기본 쉴드
-    public float BaseHeal { get; protected set; } = 0;     // 기본 회복
+    public float BaseDamage { get; protected set; } = 0;      // 기본 대미지
+    public float BaseShield { get; protected set; } = 0;      // 기본 쉴드
+    public float BaseHeal { get; protected set; } = 0;        // 기본 회복
     public int HealStacksToApply { get; protected set; } = 0; // 지속 회복
     public float BaseCritChance { get; protected set; } = 0f; // 치명타 확률
 
-    public virtual float GetCurrentDamage() { return this.BaseDamage; } // 대미지
-    public virtual float GetCurrentShield() { return this.BaseShield; } // 쉴드
-    public virtual float GetCurrentHeal() { return this.BaseHeal; } // 회복
+    public virtual float GetCurrentDamage() { return this.BaseDamage; }          // 대미지
+    public virtual float GetCurrentShield() { return this.BaseShield; }          // 쉴드
+    public virtual float GetCurrentHeal() { return this.BaseHeal; }              // 회복
     public virtual int GetCurrentHealStacks() { return this.HealStacksToApply; } // 지속 회복
-    public virtual float GetCurrentCritChance() { return this.BaseCritChance; } // 치명타 확률
+    public virtual float GetCurrentCritChance() { return this.BaseCritChance; }  // 치명타 확률
 
     // 역할 UI - [상태 이상]
     public int BleedStacksToApply { get; protected set; } = 0;    // 출혈 적용
@@ -43,7 +52,7 @@ public abstract class Card
 
     public virtual int GetCurrentBleedStacks() { return this.BleedStacksToApply; }
     public virtual float GetCurrentFreezeDuration() { return this.FreezeDurationToApply; }
-    public virtual int GetCurrentPoisonStacks() { return this.PoisonStacksToApply; } // [신규!]
+    public virtual int GetCurrentPoisonStacks() { return this.PoisonStacksToApply; }
     public virtual int GetCurrentBurnStacks() { return this.BurnStacksToApply; }
 
 
@@ -100,30 +109,22 @@ public abstract class Card
     {
     }
 
-    // ----- [태그] -----
-    public List<string> Tags { get; protected set; } = new List<string>();
-    // -------------------
-
     // --- 2. 생성자 (카드 처음 생성 시) ---
 
     /// 새 카드를 생성할 때 호출됩니다.
-    /// <param name="owner">이 카드를 소유할 컨트롤러 (PlayerController 또는 MonsterController)</param>
-    /// <param name="cooldown">이 카드의 기본 쿨타임 </param>
-    /// <param name="index">이 카드의 위치 </param>
-
     public Card(object owner, int index, float cooldown)
     {
         this.m_Owner = owner;
         this.SlotIndex = index;
         this.BaseCooldownTime = cooldown;
         this.CurrentCooldown = GetCurrentCooldownTime(); // 전투 시작 시 쿨타임이 가득 찬 상태로 시작
-        this.CardName = "Default Card Name"; 
+        this.CardNameKey = "Default Card Name"; 
     }
 
     /// 카드가 특정 Tag를 가지고 있는지 확인
-    public bool HasTag(string tag)
+    public bool HasTagKey(string tagKey)
     {
-        return Tags.Contains(tag);
+        return TagKeys.Contains(tagKey);
     }
 
     // --- 3. 핵심 함수 ---
@@ -158,7 +159,7 @@ public abstract class Card
 
         if (Random.Range(0f, 1.0f) < currentCritChance)
         {
-            Debug.Log($"[{this.CardName}] 치명타 발동!");
+            Debug.Log($"[{this.CardNameKey}] 치명타 발동!");
             return 2.0f; // 2배
         }
         return 1.0f; // 1배
@@ -217,7 +218,7 @@ public abstract class Card
         // 면역 체크
         if (Immunities.Contains(effectType))
         {
-            Debug.Log($"[{this.CardName}] (은)는 '{effectType}' 효과에 면역입니다!");
+            Debug.Log($"[{this.CardNameKey}] (은)는 '{effectType}' 효과에 면역입니다!");
             return false; // 적용 실패!
         }
 
@@ -227,7 +228,7 @@ public abstract class Card
             case StatusEffectType.Freeze:
                 m_IsFrozen = true;
                 m_FreezeTimer = Mathf.Max(m_FreezeTimer, duration); // 더 긴 시간으로 갱신
-                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 빙결되었습니다!");
+                Debug.Log($"[{this.CardNameKey}] (이)가 {duration}초간 빙결되었습니다!");
                 break;
 
             case StatusEffectType.Haste:
@@ -235,7 +236,7 @@ public abstract class Card
                 m_HasteTimer = Mathf.Max(m_HasteTimer, duration);
                 m_IsSlowed = false; // 감속 해제
                 m_SlowTimer = 0f;
-                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 가속되었습니다!");
+                Debug.Log($"[{this.CardNameKey}] (이)가 {duration}초간 가속되었습니다!");
                 break;
 
             case StatusEffectType.Slow:
@@ -243,13 +244,13 @@ public abstract class Card
                 m_SlowTimer = Mathf.Max(m_SlowTimer, duration);
                 m_IsHasted = false; // 가속 해제
                 m_HasteTimer = 0f;
-                Debug.Log($"[{this.CardName}] (이)가 {duration}초간 감속되었습니다!");
+                Debug.Log($"[{this.CardNameKey}] (이)가 {duration}초간 감속되었습니다!");
                 break;
 
             case StatusEffectType.Echo:
                 // duration을 추가 시전 횟수로 사용
                 m_BonusEchoStacks += (int)duration;
-                Debug.Log($"[{this.CardName}] (이)가 '메아리' {duration}스택을 얻었습니다!");
+                Debug.Log($"[{this.CardNameKey}] (이)가 '메아리' {duration}스택을 얻었습니다!");
                 break;
         }
         return true;
