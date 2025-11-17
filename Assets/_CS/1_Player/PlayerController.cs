@@ -229,7 +229,7 @@ public class PlayerController
         ProcessDoTs(deltaTime);
     }
 
-    // [이벤트] 카드 슬롯에 마우스가 들어왔을 때 호출
+    // 카드 슬롯에 마우스가 들어왔을 때 호출
     private void OnPointerEnterSlot(int slotIndex, PointerEnterEvent evt)
     {
         // 해당 슬롯에 카드가 있는지 확인
@@ -334,6 +334,8 @@ public class PlayerController
         AddStatLine("stat_apply_sturdy", card.GetCurrentSturdyDuration());
         AddStatLine("stat_price_inflate", card.GetCurrentPriceInflate());
         AddStatLine("stat_price_extort", card.GetCurrentPriceExtort());
+        AddStatLine("stat_triggers_shuffle", card.TriggersTargetShuffle);
+        AddStatLine("stat_triggers_chain", card.TriggersChainCount);
 
         // 소환
         if (card.SummonCount > 0 && !string.IsNullOrEmpty(card.SummonCardNameKey))
@@ -784,6 +786,111 @@ public class PlayerController
         }
     }
 
+    // 셔플
+    public void ShuffleDeck()
+    {
+        // 피셔-예이츠 셔플 (Fisher-Yates Shuffle) 알고리즘
+        for (int i = 0; i < 7; i++)
+        {
+            int randomIndex = UnityEngine.Random.Range(i, 7);
+
+            // 배열의 요소(Card) 위치 교환 (Swap)
+            Card temp = m_Cards[i];
+            m_Cards[i] = m_Cards[randomIndex];
+            m_Cards[randomIndex] = temp;
+        }
+
+        // 내부 데이터 업데이트 및 UI 갱신
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] != null)
+            {
+                // 카드가 자신의 바뀐 슬롯 번호를 기억하게 함
+                m_Cards[i].SetSlotIndex(i);
+            }
+
+            // UI를 바뀐 카드 정보로 덮어씌움
+            UpdateCardSlotUI(i);
+        }
+
+        UnityEngine.Debug.LogWarning("진영의 카드가 '재배열' 되었습니다!");
+    }
+
+    // 덱을 원래 순서대로 복구
+    public void RevertShuffle()
+    {
+        // 임시 리스트 생성
+        List<Card> allCards = new List<Card>();
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] != null) allCards.Add(m_Cards[i]);
+            m_Cards[i] = null; // 일단 배열 비우기
+        }
+
+        // 원래 위치 기준 카드 원위치
+        foreach (Card card in allCards)
+        {
+            int originalIndex = card.OriginalSlotIndex;
+
+            if (originalIndex >= 0 && originalIndex < 7 && m_Cards[originalIndex] == null)
+            {
+                m_Cards[originalIndex] = card;
+                card.SetSlotIndex(originalIndex); // 현재 위치 정보 갱신
+            }
+            else
+            {
+                // (예외 처리: 원래 자리에 누가 들어갔거나 유효하지 않으면 빈 곳 찾기)
+                for (int i = 0; i < 7; i++)
+                {
+                    if (m_Cards[i] == null) { m_Cards[i] = card; card.SetSlotIndex(i); break; }
+                }
+            }
+        }
+
+        // UI 전체 갱신
+        for (int i = 0; i < 7; i++) UpdateCardSlotUI(i);
+
+        UnityEngine.Debug.Log("진영 재배열! 원래 대형으로 복귀했습니다.");
+    }
+
+    // 교란
+    public void PerformDisruption(int exchangeCount)
+    {
+        if (exchangeCount <= 0) return;
+        int actualCount = Mathf.Min(exchangeCount, 7);
+
+        for (int i = 0; i < actualCount; i++)
+        {
+            // 무작위 인덱스 두 개를 선택
+            int indexA = UnityEngine.Random.Range(0, 7);
+            int indexB = UnityEngine.Random.Range(0, 7);
+
+            // 같은 위치면 다시 고름
+            if (indexA == indexB)
+            {
+                i--; // 카운트를 줄여서 한 번 더 시도
+                continue;
+            }
+
+            // 카드 위치 교환
+            Card cardA = m_Cards[indexA];
+            Card cardB = m_Cards[indexB];
+
+            m_Cards[indexA] = cardB;
+            m_Cards[indexB] = cardA;
+
+            // 카드 내부의 슬롯 인덱스 업데이트 (OriginalSlotIndex는 그대로 둡니다)
+            if (cardA != null) cardA.SetSlotIndex(indexB);
+            if (cardB != null) cardB.SetSlotIndex(indexA);
+
+            // 교환된 두 슬롯 UI 갱신
+            UpdateCardSlotUI(indexA);
+            UpdateCardSlotUI(indexB);
+        }
+
+        UnityEngine.Debug.LogWarning($"진영에 [{actualCount}회] 교란(Disruption)이 발생했습니다.");
+    }
+
     // --- 9. DoT 데미지 처리---
     // '개별' 타이머로 DoT 데미지를 계산 및 적용
     private void ProcessDoTs(float deltaTime)
@@ -1188,6 +1295,7 @@ public class PlayerController
                 UpdateCardSlotUI(i); // UI 갱신
             }
         }
+        RevertShuffle();
     }
 
     // --- 11. 카드 파괴 함수 ---

@@ -17,13 +17,15 @@ public abstract class Card
     public float BaseCooldownTime { get; protected set; }                     // 카드의 기본 스킬 쿨타임 (초)
     public float CurrentCooldown { get; set; }                                // 현재 남은 쿨타임. 0이 되면 스킬 발동
     protected object m_Owner;                                                 // 이 카드를 소유하고 관리하는 플레이어 또는 몬스터
-    public int SlotIndex { get; private set; }                                // 카드 슬롯 인덱스
+    public int OriginalSlotIndex { get; private set; }                        // 전투 시작 시 슬롯 인덱스 (불변)
+    public int SlotIndex { get; private set; }                                // 현재 카드 슬롯 인덱스
     public int Durability { get; protected set; } = -1;                       // 내구도
     protected int InnateEchoCount { get; set; } = 1;                          // 기본 스킬 시전 횟수
     private int m_BonusEchoStacks = 0;                                        // 추가 시전 횟수 변수
     public bool ShowCooldownUI { get; protected set; } = true;                // 쿨타운 UI 표기 여부 : 패시브 스킬만 있는 카드는 표기 안 함
     public int PriceInflateAmount { get; protected set; } = 0;                // 인상량
     public int PriceExtortAmount { get; protected set; } = 0;                 // 인하량
+    public int TriggersChainCount { get; protected set; } = 0;                // 연쇄
 
     public string SummonCardNameKey { get; protected set; } = "";             // 소환할 카드 이름
     public int SummonCount { get; protected set; } = 0;                       // 소환 개체 수
@@ -34,6 +36,7 @@ public abstract class Card
     public bool IsPolymorphed => OriginalForm != null;                        // 변이 상태 여부 확인
     public float PolymorphDurationToApply { get; protected set; } = 0f;       // 변이 툴팁용 시간
     public string PolymorphTargetNameKey { get; protected set; } = "";        // 변이 대상의 이름 키 
+    public float TriggersTargetShuffle { get; protected set; } = 0f;          // 교란
 
     // 툴팁
     public string CardSkillDescriptionKey { get; protected set; } = "";  // 카드 스킬 설명
@@ -78,6 +81,7 @@ public abstract class Card
     public virtual float GetCurrentShockDuration() { return this.ShockDurationToApply; }
     public virtual float GetCurrentSturdyDuration() { return this.SturdyDurationToApply; }
     public virtual float GetCurrentPolymorphDuration() { return this.PolymorphDurationToApply; }
+    public virtual float GetCurrentTargetShuffle() { return this.TriggersTargetShuffle; }
 
     // --- [쿨타임 컨트롤] ---
 
@@ -191,11 +195,16 @@ public abstract class Card
         this.m_Owner = owner;
         this.SlotIndex = index;
         this.BaseCooldownTime = cooldown;
-        this.CurrentCooldown = GetCurrentCooldownTime(); // 전투 시작 시 쿨타임이 가득 찬 상태로 시작
-        this.CardNameKey = "Default Card Name"; 
+        this.CurrentCooldown = GetCurrentCooldownTime(); 
+        this.CardNameKey = "Default Card Name";
+        this.OriginalSlotIndex = index;
     }
-
-    /// 카드가 특정 Tag를 가지고 있는지 확인
+    // 현재 위치 업데이트
+    public void SetSlotIndex(int index)
+    {
+        this.SlotIndex = index;
+    }
+    // 카드가 특정 Tag를 가지고 있는지 확인
     public bool HasTagKey(string tagKey)
     {
         return TagKeys.Contains(tagKey);
@@ -219,10 +228,45 @@ public abstract class Card
             ExecuteSkill();
         }
 
+        // 양쪽 연쇄 발동 로직 : TriggersChainCount가 1이면 양쪽 1칸씩
+        if (TriggersChainCount > 0)
+        {
+            if (TriggersChainCount > 0)
+            {
+                Card neighborRight = null;
+                Card neighborLeft = null;
+
+                if (m_Owner is PlayerController playerOwner)
+                {
+                    // PlayerController의 GetRight/LeftNeighbor 호출
+                    neighborRight = playerOwner.GetRightNeighbor(this.SlotIndex);
+                    neighborLeft = playerOwner.GetLeftNeighbor(this.SlotIndex);
+                }
+                else if (m_Owner is MonsterController monsterOwner)
+                {
+                    // MonsterController의 GetRight/LeftNeighbor 호출
+                    neighborRight = monsterOwner.GetRightNeighbor(this.SlotIndex);
+                    neighborLeft = monsterOwner.GetLeftNeighbor(this.SlotIndex);
+                }
+
+                // 연쇄 시도
+                TryChainTrigger(neighborRight);
+                TryChainTrigger(neighborLeft);
+            }
+        }
+
         float excessAmount = (CurrentCooldown <= 0f) ? -CurrentCooldown : 0f; // 남은 쿨타임 초과분 체크
         this.CurrentCooldown = this.GetCurrentCooldownTime() - excessAmount; // 쿨타임 초기화
         
         ConsumeDurability(); // 내구도 소모
+    }
+
+    private void TryChainTrigger(Card neighbor)
+    {
+        if (neighbor != null && neighbor.CurrentCooldown <= 0f)
+        {
+            neighbor.TriggerSkill(); // 즉발
+        }
     }
 
     // 크리티컬 확인

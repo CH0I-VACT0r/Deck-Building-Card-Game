@@ -40,6 +40,8 @@ public static class LocalizationManager
         { "stat_apply_price_inflate", "가치 인상 : {0}" },
         { "stat_apply_price_extort", "가치 인하 : {0}" },
         { "stat_apply_polymorph", "변이 : {0} {1}초" },
+        { "stat_triggers_shuffle", "교란 : {0}칸" },
+        { "stat_triggers_chain", "연쇄" },
 
         // 태그
         { "tag_mercenary", "용병" },
@@ -111,6 +113,8 @@ public static class LocalizationManager
         { "stat_apply_price_inflate", "Price Inflate : {0}" },
         { "stat_apply_price_extort", "Price Extort : {0}" },
         { "stat_apply_polymorph", "Polymorph : {0} {1}s" },
+        { "stat_triggers_shuffle", "Disruption : {0} slots" },
+        { "stat_triggers_chain", "Chain" },
         
         // 태그
         { "tag_mercenary", "Mercenary" },
