@@ -18,5 +18,6 @@ public enum StatusEffectType
     Sturdy, // 견고 : 받는 피해 감소
     PriceInflate, // 가격 인상
     PriceExtort,   // 가격 인하
+    Polymorph, // 변이
     // (나중에 추가...)
 }

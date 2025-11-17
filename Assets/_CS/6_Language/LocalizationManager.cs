@@ -39,6 +39,7 @@ public static class LocalizationManager
         { "stat_deathrattle", "유언: {0}" },
         { "stat_apply_price_inflate", "가치 인상 : {0}" },
         { "stat_apply_price_extort", "가치 인하 : {0}" },
+        { "stat_apply_polymorph", "변이 : {0} {1}초" },
 
         // 태그
         { "tag_mercenary", "용병" },
@@ -50,6 +51,10 @@ public static class LocalizationManager
         { "tag_beast", "야수" },
         { "tag_monster", "몬스터" },
         { "tag_goblin", "고블린" },
+
+        // 양
+        { "card_sheep_name", "양"},
+        { "card_sheep_desc", "양입니다." },
 
         // 야만전사 전투병
         { "card_barbarian_warrior_name", "야만전사 전투병" },
@@ -68,9 +73,13 @@ public static class LocalizationManager
         { "card_goblin_skill_desc", "상대를 공격합니다." },
         { "card_goblin_flavor", "전형적인 고블린입니다." },
 
-        
+        // 마녀
+        { "card_witch_name", "마녀" },
+        { "card_witch_skill_desc", "상대 카드를 양으로 변이시킵니다." },
 
-        
+
+
+
     };
 
     // 영어 사전 (en)
@@ -101,6 +110,7 @@ public static class LocalizationManager
         { "stat_deathrattle", "Deathrattle" },
         { "stat_apply_price_inflate", "Price Inflate : {0}" },
         { "stat_apply_price_extort", "Price Extort : {0}" },
+        { "stat_apply_polymorph", "Polymorph : {0} {1}s" },
         
         // 태그
         { "tag_mercenary", "Mercenary" },
@@ -111,6 +121,10 @@ public static class LocalizationManager
         { "tag_monster", "Monster" },
         { "tag_beast", "Beast" },
         { "tag_goblin", "Goblin" },
+
+        // 양
+        { "card_sheep_name", "Sheep"},
+        { "card_sheep_desc", "It's a sheep." },
 
         // 야만전사 전투병
         { "card_barbarian_warrior_name", "Barbarian Warrior" },
@@ -128,6 +142,10 @@ public static class LocalizationManager
         { "card_goblin_name", "Goblin" },
         { "card_goblin_skill_desc", "Attack the opponent" },
         { "card_goblin_flavor", "A typical goblin." },
+
+        // 마녀
+        { "card_witch_name", "Witch" },
+        { "card_witch_skill_desc", "Polymorph the opponent card into a sheep." },
     };
 
     // "키"를 주면 현재 언어에 맞는 "텍스트"를 반환합니다.

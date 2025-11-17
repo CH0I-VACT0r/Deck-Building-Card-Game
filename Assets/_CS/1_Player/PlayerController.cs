@@ -355,6 +355,21 @@ public class PlayerController
             AddTextLine(text);
         }
 
+        // 변이 
+        if (card.PolymorphDurationToApply > 0 && !string.IsNullOrEmpty(card.PolymorphTargetNameKey))
+        {
+            // 변이 대상 이름
+            string targetName = LocalizationManager.GetText(card.PolymorphTargetNameKey);
+
+            // 최종 문장 완성
+            string text = LocalizationManager.GetText("stat_apply_polymorph", targetName, card.PolymorphDurationToApply);
+
+            // 텍스트 라인 추가
+            Label line = new Label(text);
+            line.AddToClassList("tooltip-stat-line");
+            m_TooltipStatContainer.Add(line);
+        }
+
         // 컨테이너 보이기/숨기기
         if (m_TooltipStatContainer.childCount > 0)
         {
@@ -593,7 +608,7 @@ public class PlayerController
 
     // --- 8. 상태 이상 헬퍼 함수 ---
     /// 내 카드 중 '면역이 아닌' 무작위 카드 N개에 상태 이상을 적용
-    public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration)
+    public void ApplyStatusToRandomCards(int count, StatusEffectType effectType, float duration, string extraData = "")
     {
         if (m_BattleManager.IsBattleEnded) return;
         // 0~6번 슬롯 인덱스가 담긴 리스트 생성
@@ -621,7 +636,7 @@ public class PlayerController
             {
                 // 카드에게 효과 적용 시도
                 // (이 코드가 작동하려면 Card.cs에 ApplyStatusEffect 함수가 있어야 됨)
-                if (card.ApplyStatusEffect(effectType, duration))
+                if (card.ApplyStatusEffect(effectType, duration, extraData))
                 {
                     // 적용에 성공했으면, 카운팅
                     successCount++;
@@ -719,6 +734,54 @@ public class PlayerController
                 break;
         }
         UpdateDoTUI(); // UI 업데이트
+    }
+
+    // 변이 
+    public void MutateCard(int slotIndex, string newCardID, float duration)
+    {
+        if (slotIndex < 0 || slotIndex >= 7) return;
+        if (m_Cards[slotIndex] == null) return;
+
+        // 1. 원본 카드 백업
+        Card originalCard = m_Cards[slotIndex];
+
+        // 2. 새 카드 생성 (팩토리 이용)
+        Card newCard = CardFactory.CreateCard(newCardID, this, slotIndex);
+        if (newCard == null) return; // 생성 실패 시 중단
+
+        // 3. [핵심!] 변이 정보 설정 (원본 주입 + 시간 설정)
+        newCard.OriginalForm = originalCard;
+        newCard.PolymorphTimer = duration;
+
+        // 4. 배열 교체 및 UI 갱신
+        m_Cards[slotIndex] = newCard;
+        UpdateCardSlotUI(slotIndex);
+
+        Debug.Log($"[{originalCard.CardNameKey}] -> [{newCard.CardNameKey}] 변이됨! ({duration}초)");
+    }
+
+    // 변이 해제 및 복구
+    public void RevertMutation(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= 7) return;
+        Card currentCard = m_Cards[slotIndex];
+
+        // 변이된 카드가 맞는지 확인 (OriginalForm을 가지고 있는지)
+        if (currentCard != null && currentCard.OriginalForm != null)
+        {
+            // 1. 품고 있던 원본 카드 꺼내기
+            Card originalCard = currentCard.OriginalForm;
+
+            // 2. 덱에 원본 복귀
+            m_Cards[slotIndex] = originalCard;
+
+            // 3. 연결 끊기 (중요: 참조 제거)
+            currentCard.OriginalForm = null;
+
+            // 4. UI 갱신
+            UpdateCardSlotUI(slotIndex);
+            Debug.Log($"변이 해제! [{originalCard.CardNameKey}] 복귀 완료.");
+        }
     }
 
     // --- 9. DoT 데미지 처리---

@@ -29,6 +29,12 @@ public abstract class Card
     public int SummonCount { get; protected set; } = 0;                       // 소환 개체 수
     public string DeathrattleDescKey { get; protected set; } = "";            // 유언 설명
 
+    public Card OriginalForm { get; set; } = null;                            // 원본 카드 저장
+    public float PolymorphTimer { get; set; } = 0f;                           // 변이 지속 시간
+    public bool IsPolymorphed => OriginalForm != null;                        // 변이 상태 여부 확인
+    public float PolymorphDurationToApply { get; protected set; } = 0f;       // 변이 툴팁용 시간
+    public string PolymorphTargetNameKey { get; protected set; } = "";        // 변이 대상의 이름 키 
+
     // 툴팁
     public string CardSkillDescriptionKey { get; protected set; } = "";  // 카드 스킬 설명
     public bool HasQuest { get; protected set; } = false;                // 퀘스트 여부
@@ -71,6 +77,7 @@ public abstract class Card
     public virtual int GetCurrentEchoStacks() { return this.EchoStacksToApply; }
     public virtual float GetCurrentShockDuration() { return this.ShockDurationToApply; }
     public virtual float GetCurrentSturdyDuration() { return this.SturdyDurationToApply; }
+    public virtual float GetCurrentPolymorphDuration() { return this.PolymorphDurationToApply; }
 
     // --- [쿨타임 컨트롤] ---
 
@@ -248,6 +255,20 @@ public abstract class Card
     // 쿨타임 줄여주는 함수 : 매 프레임 호출
     public virtual void UpdateCooldown(float deltaTime)
     {
+        // 0. 변이 체크
+        if (IsPolymorphed)
+        {
+            PolymorphTimer -= deltaTime;
+            if (PolymorphTimer <= 0f)
+            {
+                // 시간 다 되면 복구
+                if (m_Owner is PlayerController player) player.RevertMutation(this.SlotIndex);
+                else if (m_Owner is MonsterController monster) monster.RevertMutation(this.SlotIndex);
+
+                return;
+            }
+        }
+
         // 1. 빙결 체크
         if (m_IsFrozen)
         {
@@ -280,7 +301,7 @@ public abstract class Card
     }
 
     /// 외부에서 이 카드에게 상태 이상을 적용하는 함수 : <returns>면역이면 false, 적용되면 true를 반환 
-    public virtual bool ApplyStatusEffect(StatusEffectType effectType, float duration)
+    public virtual bool ApplyStatusEffect(StatusEffectType effectType, float duration, string extraData = "")
     {
         // 면역 체크
         if (Immunities.Contains(effectType))
@@ -328,6 +349,22 @@ public abstract class Card
             case StatusEffectType.PriceExtort:
                 PriceExtortAmount += (int)duration;
                 Debug.Log($"[{CardNameKey}] 가격 인하! (-{(int)duration})");
+                break;
+
+            case StatusEffectType.Polymorph:
+
+                // 변이할 대상 ID 결정 : extraData가 있으면 그걸 쓰고, 없으면 기본값 "card_sheep" 사용
+                string targetID = string.IsNullOrEmpty(extraData) ? "card_sheep" : extraData;
+
+                // Controller에게 구체적인 ID로 변이 요청
+                if (m_Owner is PlayerController player)
+                {
+                    player.MutateCard(this.SlotIndex, targetID, duration);
+                }
+                else if (m_Owner is MonsterController monster)
+                {
+                    monster.MutateCard(this.SlotIndex, targetID, duration);
+                }
                 break;
         }
         return true;

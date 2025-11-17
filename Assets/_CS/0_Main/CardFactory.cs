@@ -36,11 +36,19 @@ public static class CardFactory
 
 
             // --- '몬스터' 카드들 ---
-            // --- '몬스터' 카드들 ---
-            case "goblin": // [신규!]
+            // 양
+            case "card_sheep":
+                return new Card_Sheep(owner, index);
+            //고블린
+            case "goblin": 
                 // 몬스터 전용 카드이므로, 주인이 몬스터일 때만 생성
                 if (monsterOwner != null)
                     return new Card_Goblin(monsterOwner, index);
+                break;
+            // 마녀
+            case "witch": // [신규!]
+                if (monsterOwner != null)
+                    return new Card_Witch(monsterOwner, index);
                 break;
         }
 
