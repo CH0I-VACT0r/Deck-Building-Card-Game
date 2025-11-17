@@ -13,7 +13,7 @@ public class Card_BarbarianWarrior : Card
         this.CardNameKey = "card_barbarian_warrior_name";
         // (TODO: "CardImages/BarbarianWarrior" 경로에 실제 이미지 파일이 있어야 합니다)
         this.CardImage = Resources.Load<Sprite>("CardImages/Lord_SevereCold/Barbarian_Warrior");
-        this.CardPrice = 3; // (가격은 임의로 15로 설정)
+        SetInitPrice(3);
         this.Rarity = CardRarity.Bronze;
 
         // --- 2. 태그 키 할당 ---

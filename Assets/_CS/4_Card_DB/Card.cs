@@ -11,7 +11,8 @@ public abstract class Card
     public Sprite CardImage { get; protected set; }                           // 카드 이미지
     public List<string> TagKeys { get; protected set; } = new List<string>(); // 카드 태그 키
     public CardRarity Rarity { get; protected set; }                          // 카드 등급
-    public int CardPrice { get; protected set; } = 0;                         // 카드 가격
+    public int CardPrice { get; protected set; } = 0;                         // 카드 가격 (변동 가능)
+    public int BasePrice { get; protected set; } = 0;                         // 원래 가격 (고정)
     public LordType OwnerLord { get; protected set; } = LordType.Common;      // 소속 영주
     public float BaseCooldownTime { get; protected set; }                     // 카드의 기본 스킬 쿨타임 (초)
     public float CurrentCooldown { get; set; }                                // 현재 남은 쿨타임. 0이 되면 스킬 발동
@@ -129,8 +130,36 @@ public abstract class Card
     {
     }
 
-    // --- 2. 생성자 (카드 처음 생성 시) ---
+    // --- [가격 컨트롤] ---
+    // 초기 가격 설정
+    protected void SetInitPrice(int price)
+    {
+        this.CardPrice = price;
+        this.BasePrice = price;
+    }
 
+    // 카드의 가격을 변경합니다.
+    public void ChangePrice(int amount)
+    {
+        this.CardPrice += amount;
+
+        // 가격은 0보다 작아질 수 없게 막음
+        if (this.CardPrice < 0) this.CardPrice = 0;
+    }
+
+    // 카드 가격 리셋
+    public void ResetPrice()
+    {
+        this.CardPrice = this.BasePrice;
+    }
+
+    // 현재 가격 반환
+    public virtual int GetCurrentPrice()
+    {
+        return this.CardPrice;
+    }
+
+    // --- 2. 생성자 (카드 처음 생성 시) ---
     /// 새 카드를 생성할 때 호출됩니다.
     public Card(object owner, int index, float cooldown)
     {

@@ -13,7 +13,7 @@ public class Card_Goblin : Card
         this.CardNameKey = "card_goblin_name";
         // (TODO: "CardImages/Goblin" 경로에 실제 이미지 파일이 있어야 합니다)
         this.CardImage = Resources.Load<Sprite>("CardImages/Monster/Goblin");
-        this.CardPrice = 5; // (가격은 임의로 5로 설정)
+        SetInitPrice(1); // (가격은 임의로 5로 설정)
         this.Rarity = CardRarity.Bronze; // (몬스터 등급)
 
         // --- 2. 태그 키 할당 ---
