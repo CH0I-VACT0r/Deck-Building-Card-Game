@@ -246,7 +246,7 @@ public class PlayerController
             .StartingIn(TOOLTIP_DELAY_MS);
     }
 
-    // [이벤트] 카드 슬롯에서 마우스가 나갔을 때 호출
+    // 카드 슬롯에서 마우스가 나갔을 때 호출
     private void OnPointerLeaveSlot()
     {
         // 예약되어 있던 툴팁 스케줄 즉시 취소
@@ -259,7 +259,7 @@ public class PlayerController
         }
     }
 
-    // [실행] 스케줄러에 의해 딜레이 이후 실제 툴팁을 띄우는 함수
+    // 스케줄러에 의해 딜레이 이후 실제 툴팁을 띄우는 함수
     private void ShowTooltip(Card card, VisualElement slotElement)
     {
         // null 체크
@@ -1038,7 +1038,7 @@ public class PlayerController
             if (costContainer != null && costLabel != null)
             {
                 // Card.cs의 CardPrice가 0보다 클 때만 UI를 켭니다.
-                if (cardData.CardPrice >= 0)
+                if (cardData.CardPrice > 0)
                 {
                     costContainer.style.display = DisplayStyle.Flex;
                     costLabel.text = cardData.CardPrice.ToString();

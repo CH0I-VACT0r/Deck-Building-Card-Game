@@ -969,7 +969,7 @@ public class MonsterController
 
             if (costContainer != null && costLabel != null)
             {
-                if (cardData.CardPrice >= 0)
+                if (cardData.CardPrice > 0)
                 {
                     costContainer.style.display = DisplayStyle.Flex;
                     costLabel.text = cardData.CardPrice.ToString();
