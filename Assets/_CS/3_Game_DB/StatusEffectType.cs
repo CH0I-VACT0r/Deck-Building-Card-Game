@@ -15,6 +15,8 @@ public enum StatusEffectType
     Slow, // 감속
     Echo, // 스킬 반복 시전
     Shock, // 충격 : 받는 피해 증가
-    Sturdy // 견고 : 받는 피해 감소
+    Sturdy, // 견고 : 받는 피해 감소
+    PriceInflate, // 가격 인상
+    PriceExtort,   // 가격 인하
     // (나중에 추가...)
 }

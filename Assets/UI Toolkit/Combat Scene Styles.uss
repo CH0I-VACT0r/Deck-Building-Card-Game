@@ -448,6 +448,7 @@ VisualElement {
     /* C#이 Label을 추가할 공간 */
     margin-top: 0px;
     margin-bottom: 0px;
+    flex-direction: column;
     display: none; /* C#이 켤 때까지 숨김 */
 }
 

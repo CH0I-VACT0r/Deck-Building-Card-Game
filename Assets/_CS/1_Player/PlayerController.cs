@@ -308,6 +308,13 @@ public class PlayerController
             }
         };
 
+        System.Action<string> AddTextLine = (string text) =>
+        {
+            Label line = new Label(text);
+            line.AddToClassList("tooltip-stat-line");
+            m_TooltipStatContainer.Add(line);
+        };
+
         // 모든 스탯 추가
         AddStatLine("stat_damage", card.GetCurrentDamage());
         AddStatLine("stat_shield", card.GetCurrentShield());
@@ -325,6 +332,28 @@ public class PlayerController
         AddStatLine("stat_apply_echo", card.GetCurrentEchoStacks());
         AddStatLine("stat_apply_shock", card.GetCurrentShockDuration());
         AddStatLine("stat_apply_sturdy", card.GetCurrentSturdyDuration());
+        AddStatLine("stat_price_inflate", card.GetCurrentPriceInflate());
+        AddStatLine("stat_price_extort", card.GetCurrentPriceExtort());
+
+        // 소환
+        if (card.SummonCount > 0 && !string.IsNullOrEmpty(card.SummonCardNameKey))
+        {
+            // 소환할 카드 이름 번역
+            string summonName = LocalizationManager.GetText(card.SummonCardNameKey);
+            // 최종 문장 완성 ("소환: "카드 이름" x 2")
+            string text = LocalizationManager.GetText("stat_summon", summonName, card.SummonCount);
+            AddTextLine(text);
+        }
+
+        // 유언
+        if (!string.IsNullOrEmpty(card.DeathrattleDescKey))
+        {
+            // 유언 효과 설명 번역 
+            string effectDesc = LocalizationManager.GetText(card.DeathrattleDescKey);
+            // 최종 문장 완성 ("유언: ~~~")
+            string text = LocalizationManager.GetText("stat_deathrattle", effectDesc);
+            AddTextLine(text);
+        }
 
         // 컨테이너 보이기/숨기기
         if (m_TooltipStatContainer.childCount > 0)

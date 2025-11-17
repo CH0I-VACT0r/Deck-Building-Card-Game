@@ -22,6 +22,12 @@ public abstract class Card
     protected int InnateEchoCount { get; set; } = 1;                          // 기본 스킬 시전 횟수
     private int m_BonusEchoStacks = 0;                                        // 추가 시전 횟수 변수
     public bool ShowCooldownUI { get; protected set; } = true;                // 쿨타운 UI 표기 여부 : 패시브 스킬만 있는 카드는 표기 안 함
+    public int PriceInflateAmount { get; protected set; } = 0;                // 인상량
+    public int PriceExtortAmount { get; protected set; } = 0;                 // 인하량
+
+    public string SummonCardNameKey { get; protected set; } = "";             // 소환할 카드 이름
+    public int SummonCount { get; protected set; } = 0;                       // 소환 개체 수
+    public string DeathrattleDescKey { get; protected set; } = "";            // 유언 설명
 
     // 툴팁
     public string CardSkillDescriptionKey { get; protected set; } = "";  // 카드 스킬 설명
@@ -109,7 +115,7 @@ public abstract class Card
         return m_IsFrozen;
     }
    
-    public virtual void ClearBattleFrozen() // 어디서 쓰는 지 몰라서 일단 남겨둠
+    public virtual void ClearBattleFrozen() // 어디서 쓰는지 몰라서 일단 남겨둠
     {
         // 빙결 상태를 강제로 해제합니다.
         m_IsFrozen = false;
@@ -124,6 +130,9 @@ public abstract class Card
         m_HasteTimer = 0f;
         m_IsSlowed = false;
         m_SlowTimer = 0f;
+
+        PriceInflateAmount = 0;
+        PriceExtortAmount = 0;
     }
 
     public virtual void ClearBattleStatBuffs()
@@ -156,8 +165,17 @@ public abstract class Card
     // 현재 가격 반환
     public virtual int GetCurrentPrice()
     {
-        return this.CardPrice;
+        int finalPrice = this.CardPrice;
+
+        finalPrice += PriceInflateAmount;
+        finalPrice -= PriceExtortAmount;
+
+        // 0 이하 방지
+        return Mathf.Max(0, finalPrice);
     }
+
+    public virtual int GetCurrentPriceInflate() { return this.PriceInflateAmount; }
+    public virtual int GetCurrentPriceExtort() { return this.PriceExtortAmount; }
 
     // --- 2. 생성자 (카드 처음 생성 시) ---
     /// 새 카드를 생성할 때 호출됩니다.
@@ -300,6 +318,16 @@ public abstract class Card
                 // duration을 추가 시전 횟수로 사용
                 m_BonusEchoStacks += (int)duration;
                 Debug.Log($"[{this.CardNameKey}] (이)가 '메아리' {duration}스택을 얻었습니다!");
+                break;
+
+            case StatusEffectType.PriceInflate:
+                PriceInflateAmount += (int)duration;
+                Debug.Log($"[{CardNameKey}] 가격 인상! (+{(int)duration})");
+                break;
+
+            case StatusEffectType.PriceExtort:
+                PriceExtortAmount += (int)duration;
+                Debug.Log($"[{CardNameKey}] 가격 인하! (-{(int)duration})");
                 break;
         }
         return true;
