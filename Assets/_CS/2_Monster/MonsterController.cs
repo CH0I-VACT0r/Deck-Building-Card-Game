@@ -1285,6 +1285,78 @@ public class MonsterController
         return true;
     }
 
+    // --- 13. 드래그 앤 드랍 ---
+    public BattleManager GetBattleManager()
+    {
+        return m_BattleManager;
+    }
+    //툴팁 표시 예약 취소
+    public void ClearTooltipScheduler()
+    {
+        m_TooltipScheduler?.Pause();
+    }
+
+    // UI 요소 인덱스 반환
+    public int GetSlotIndexFromTarget(VisualElement target)
+    {
+        for (int i = 0; i < Slots.Count; i++)
+        {
+            if (Slots[i] == target)
+            {
+                return i; // 인덱스 (0~6) 반환
+            }
+        }
+        return -1; // 못 찾음
+    }
+
+    // 배열에서 카드를 제거하고, 이후의 요소들을 왼쪽으로 당겨 빈 공간을 메우는 함수
+    public void RemoveCard(int index)
+    {
+        if (index < 0 || index >= m_Cards.Length) return;
+
+        // 왼쪽으로 시프트
+        for (int i = index; i < m_Cards.Length - 1; i++)
+        {
+            m_Cards[i] = m_Cards[i + 1];
+            // New SlotIndex
+            if (m_Cards[i] != null) m_Cards[i].SetSlotIndex(i);
+        }
+
+        //마지막 칸을 null로 변환
+        m_Cards[m_Cards.Length - 1] = null;
+
+        //  UI 갱신
+        for (int i = index; i < m_Cards.Length; i++)
+        {
+            UpdateCardSlotUI(i);
+        }
+    }
+
+    //지정된 인덱스에 카드를 삽입하고, 기존 요소들을 오른쪽으로 미는 함수
+    public void InsertCard(int index, Card cardToInsert)
+    {
+        if (index < 0 || index >= m_Cards.Length) return;
+        if (cardToInsert == null) return;
+
+        // 오른쪽으로 시프트
+        for (int i = m_Cards.Length - 1; i > index; i--)
+        {
+            m_Cards[i] = m_Cards[i - 1];
+            // New SlotIndex
+            if (m_Cards[i] != null) m_Cards[i].SetSlotIndex(i);
+        }
+
+        // 지정된 인덱스에 카드 삽입
+        m_Cards[index] = cardToInsert;
+        cardToInsert.SetSlotIndex(index);
+
+        // UI 갱신
+        for (int i = index; i < m_Cards.Length; i++)
+        {
+            UpdateCardSlotUI(i);
+        }
+    }
+
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------
 

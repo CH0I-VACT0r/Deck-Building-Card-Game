@@ -15,6 +15,7 @@ public class BattleManager : MonoBehaviour
     // --- 3. 전투 상태 ---
     private bool m_IsBattleEnded = false;
     public bool IsBattleEnded { get { return m_IsBattleEnded; } }
+    public bool IsDeckEditingAllowed { get; set; } = false; // 덱 편집(D&D) 허용 상태
 
     // --- 4. Unity 수명 주기 함수 ---
     void OnEnable()
@@ -73,6 +74,11 @@ public class BattleManager : MonoBehaviour
         {
             Debug.LogError("--- 전투 종료! 승자: 몬스터 ---");
             // (여기에 패배 처리 로직 호출)
+        }
+        GameManager gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.SetPhase(GameManager.GamePhase.Reward); // GameManager의 Reward 단계로 진입
         }
     }
 }
