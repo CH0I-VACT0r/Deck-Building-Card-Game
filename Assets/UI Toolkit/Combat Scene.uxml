@@ -139,9 +139,9 @@
                     <ui:VisualElement name="HP-Bar-Fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
                     <ui:Label text="Label" name="HP-label" class="bar-label" />
                     <ui:VisualElement name="Status-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
-                        <ui:Label text="🩸0" name="BleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
-                        <ui:Label text="☠️ 0" name="PoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
-                        <ui:Label text="🔥 0" name="BurnStatus" class="status-effect-icon burn-status" style="display: none;" />
+                        <ui:Label text="🩸7" name="BleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
+                        <ui:Label text="☠️ 7" name="PoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
+                        <ui:Label text="🔥 5" name="BurnStatus" class="status-effect-icon burn-status" style="display: none;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="Buff-Effect-Container" class="buff-effect-container" style="flex-grow: 1;">
                         <ui:Label text="💚 0" name="HealStatus" class="status-effect-icon heal-status" style="display: none;" />

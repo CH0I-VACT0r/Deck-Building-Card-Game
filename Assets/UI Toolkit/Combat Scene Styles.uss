@@ -132,7 +132,9 @@ VisualElement {
     color: white;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    font-size: 16px;
+    font-size: 20px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
 }
 
 .xp-label {
@@ -191,11 +193,13 @@ VisualElement {
 
 .status-effect-icon {
     -unity-font-style: bold;
-    font-size: 14px;
+    font-size: 18px;
     margin-left: 5px;
     padding: 2px 5px;
     background-color: rgba(0, 0, 0, 0.7);
     border-radius: 2px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: lightgrey;
 }
 
 .bleed-status {
@@ -203,7 +207,7 @@ VisualElement {
 }
 
 .poison-status {
-    color: rgb(142, 68, 173);
+    color: rgb(70, 38, 121);
 }
 
 .burn-status {
