@@ -46,9 +46,27 @@ public class GameManager : MonoBehaviour
         return (Weekday)dayIndex;
     }
 
-    // --- 핵심 로직 ---
+    void Update()
+    {
+        // [테스트용] 스페이스바를 누르면 '전투 단계'로 강제 전환
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (currentPhase == GamePhase.Preparation)
+            {
+                Debug.Log("Test] 스페이스바 입력: 전투 시작!");
+                SetPhase(GamePhase.Battle);
+            }
+            else if (currentPhase == GamePhase.Reward)
+            {
+                // (나중에 턴 넘기기 버튼 기능)
+                Debug.Log("[Test] 다음 날로 진행");
+                StartNextDay();
+            }
+        }
+    }
 
-    // [핵심!] 게임 단계를 설정하고 필요한 액션을 수행합니다.
+    // --- 핵심 로직 ---
+    // 게임 단계 설정 / 필요한 액션 수행
     public void SetPhase(GamePhase newPhase)
     {
         currentPhase = newPhase;

@@ -34,6 +34,7 @@ public class BattleManager : MonoBehaviour
     void Update()
     {
         // 전투 종료
+        if (IsDeckEditingAllowed) return;
         if (m_IsBattleEnded) return;
 
         // dt time을 컨트롤러들에게 전달
