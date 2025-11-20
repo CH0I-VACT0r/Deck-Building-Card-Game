@@ -527,13 +527,8 @@ public class PlayerController
 
         Debug.Log($"[플레이어] {finalDamage} 피해 받음! (쉴드 {CurrentShield} 남음, 체력 {CurrentHP} 남음)");
 
-        if (CurrentHP <= 0)
-        {
-            CurrentHP = 0;
-            m_BattleManager.EndBattle("Monster"); // 패배!
-        }
-
         UpdateHealthUI();
+        m_BattleManager.CheckBattleStatus();
     }
 
     public virtual void IncreaseMaxHP(float amount)
