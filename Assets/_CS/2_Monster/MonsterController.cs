@@ -17,6 +17,7 @@ public class MonsterController
     public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7);
 
     // 툴팁 UI 요소
+    protected VisualElement m_Root;
     private VisualElement m_TooltipRoot;
     private Label m_TooltipName;
     private VisualElement m_TooltipTagContainer;
@@ -93,87 +94,37 @@ public class MonsterController
 
     // --- 5. 생성자 ---
     /// MonsterController가 처음 생성될 때 호출됩니다.
-    public MonsterController(BattleManager manager, VisualElement VisualElement, float maxHP)
+    public MonsterController(BattleManager manager, float maxHP)
     {
         this.m_BattleManager = manager;
         this.MaxHP = maxHP;
         this.CurrentHP = maxHP;
         this.CurrentShield = 0;
 
-        // UXML 패널 이름 (UXML Name 확인!)
-        this.m_MonsterParty = VisualElement.Q<VisualElement>("MonsterParty");
-        this.m_StatusPanel = VisualElement.Q<VisualElement>("MonsterStatus");
+        Slots = new List<VisualElement>();
+        m_RoleUIContainers = new List<VisualElement>();
+        m_CooldownOverlays = new List<VisualElement>();
+        m_CardImageLayers = new List<VisualElement>();
+        m_CostContainers = new List<VisualElement>();
+        m_CostLabels = new List<Label>();
+    }
 
-        m_TooltipRoot = VisualElement.Q<VisualElement>("TooltipRoot");
-        if (m_TooltipRoot != null)
-        {
-            // UXML Name 확인!
-            m_TooltipName = m_TooltipRoot.Q<Label>("TooltipName");
-            m_TooltipTagContainer = m_TooltipRoot.Q<VisualElement>("TooltipTagContainer");
-            m_TooltipSkillDesc = m_TooltipRoot.Q<Label>("TooltipSkillDesc");
-            m_TooltipCooldown = m_TooltipRoot.Q<Label>("TooltipCooldown");
-            m_TooltipQuestContainer = m_TooltipRoot.Q<VisualElement>("TooltipQuestContainer");
-            m_TooltipQuestTitle = m_TooltipRoot.Q<Label>("QuestName");
-            m_TooltipQuestDesc = m_TooltipRoot.Q<Label>("TooltipQuestDesc");
-            m_TooltipQuestStatus = m_TooltipRoot.Q<Label>("TooltipQuestStatus");
-            m_TooltipStatContainer = m_TooltipRoot.Q<VisualElement>("TooltipStatContainer");
-            m_TooltipCritContainer = m_TooltipRoot.Q<VisualElement>("TooltipCritContainer");
-            m_TooltipCritChance = m_TooltipRoot.Q<Label>("TooltipCritChance");
-            m_TooltipDurabilityContainer = m_TooltipRoot.Q<VisualElement>("TooltipDurabilityContainer");
-            m_TooltipDurability = m_TooltipRoot.Q<Label>("TooltipDurability");
-            m_TooltipFlavorText = m_TooltipRoot.Q<Label>("TooltipFlavorText");
-            m_TooltipDivider1 = m_TooltipRoot.Q<VisualElement>("TooltipDivider1");
-            m_TooltipDivider2 = m_TooltipRoot.Q<VisualElement>("TooltipDivider2");
-            m_TooltipRoot.style.display = DisplayStyle.None;
-        }
-        else
-        {
-            Debug.LogError("[PlayerController] 'TooltipRoot'를 UXML에서 찾을 수 없습니다!");
-        }
+    // --- 5. UI 초기화 (InitializeUI) ---
+    // UIManager가 호출합니다.
+    public void InitializeUI(VisualElement monsterUiRoot, VisualElement mainRoot)
+    {
+        m_Root = monsterUiRoot; // Page_Battle.uxml의 루트
 
-        // 카드 슬롯(MonSlot1 ~ MonSlot7) 리스트에 추가
-        Slots.Clear();
-        m_RoleUIContainers.Clear();
-        m_CooldownOverlays.Clear();
-        m_CardImageLayers.Clear();
-        m_CostContainers.Clear();
-        m_CostLabels.Clear();
-        for (int i = 0; i < 7; i++)
-        {
-            string slotName = "MonSlot" + (i + 1);
-            VisualElement slot = m_MonsterParty.Q<VisualElement>(slotName);
-            Slots.Add(slot);
+        // 몬스터 상태 패널 연결
+        m_StatusPanel = monsterUiRoot.Q<VisualElement>("MonsterStatus");
 
-            if (slot != null)
-            {
-                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
-                m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
-                m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
-                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
-                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
-
-                int currentIndex = i;
-                slot.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterSlot(currentIndex, evt));
-                slot.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveSlot());
-            }
-            else
-            {
-                Debug.LogError($"[MonsterController] 'MonSlot{i + 1}'을 UXML에서 찾을 수 없습니다!");
-                m_RoleUIContainers.Add(null);
-                m_CooldownOverlays.Add(null);
-                m_CostContainers.Add(null);
-                m_CostLabels.Add(null);
-            }
-        }
-
-        // 3. 상태 UI 연결
         if (m_StatusPanel != null)
         {
-            // UXML Name 확인!
             m_HealthBarFill = m_StatusPanel.Q<VisualElement>("Monster-HP-fill");
             m_HealthLabel = m_StatusPanel.Q<Label>("Monster-HP-label");
             m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Monster-ShieldBar-fill");
             m_ShieldLabel = m_StatusPanel.Q<Label>("Monster-ShieldBar-label");
+
             m_NameLabel = m_StatusPanel.Q<Label>("MonsterName-label");
 
             m_BleedStatusLabel = m_StatusPanel.Q<Label>("MonsterBleedStatus");
@@ -183,16 +134,105 @@ public class MonsterController
         }
         else
         {
-            Debug.LogError("[MonsterController] 'MonsterStatusPanel'을 UXML에서 찾을 수 없습니다!");
+            Debug.LogError("[MonsterController] 'MonsterStatus'를 UXML에서 찾을 수 없습니다!");
         }
 
-        // 4. UI 즉시 업데이트
+        // 몬스터 슬롯 연결
+        Slots.Clear();
+        m_RoleUIContainers.Clear();
+        m_CooldownOverlays.Clear();
+        m_CardImageLayers.Clear();
+        m_CostContainers.Clear();
+        m_CostLabels.Clear();
+
+        // 부모 컨테이너 찾기
+        m_MonsterParty = monsterUiRoot.Q<VisualElement>("MonsterParty");
+
+        for (int i = 0; i < 7; i++)
+        {
+            string slotName = "MonSlot" + (i + 1);
+
+            VisualElement slot = (m_MonsterParty != null) ? m_MonsterParty.Q<VisualElement>(slotName) : monsterUiRoot.Q<VisualElement>(slotName);
+
+            Slots.Add(slot);
+
+            if (slot != null)
+            {
+                // 내부 요소 연결 (기존 이름 유지)
+                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
+                m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
+                m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
+                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
+                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
+
+                // [툴팁 이벤트 등록]
+                int currentIndex = i;
+                slot.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterSlot(currentIndex, evt));
+                slot.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveSlot());
+            }
+            else
+            {
+                Debug.LogError($"[MonsterController] '{slotName}'을 UXML에서 찾을 수 없습니다!");
+                // 리스트 인덱스 밀림 방지용 null 추가
+                m_CardImageLayers.Add(null);
+                m_RoleUIContainers.Add(null);
+                m_CooldownOverlays.Add(null);
+                m_CostContainers.Add(null);
+                m_CostLabels.Add(null);
+            }
+        }
+
+        // 툴팁 UI 연결 (MainLayout.uxml -> mainRoot에서 찾기!)
+        m_TooltipRoot = mainRoot.Q<VisualElement>("TooltipRoot");
+
+        if (m_TooltipRoot != null)
+        {
+            // 툴팁 내부 요소 연결
+            m_TooltipName = m_TooltipRoot.Q<Label>("TooltipName");
+            m_TooltipTagContainer = m_TooltipRoot.Q<VisualElement>("TooltipTagContainer");
+            m_TooltipSkillDesc = m_TooltipRoot.Q<Label>("TooltipSkillDesc");
+            m_TooltipCooldown = m_TooltipRoot.Q<Label>("TooltipCooldown");
+
+            m_TooltipStatContainer = m_TooltipRoot.Q<VisualElement>("TooltipStatContainer");
+
+            m_TooltipQuestContainer = m_TooltipRoot.Q<VisualElement>("TooltipQuestContainer");
+            m_TooltipQuestTitle = m_TooltipRoot.Q<Label>("QuestName");
+            m_TooltipQuestDesc = m_TooltipRoot.Q<Label>("TooltipQuestDesc");
+            m_TooltipQuestStatus = m_TooltipRoot.Q<Label>("TooltipQuestStatus");
+
+            m_TooltipCritContainer = m_TooltipRoot.Q<VisualElement>("TooltipCritContainer");
+            m_TooltipCritChance = m_TooltipRoot.Q<Label>("TooltipCritChance");
+
+            m_TooltipDurabilityContainer = m_TooltipRoot.Q<VisualElement>("TooltipDurabilityContainer");
+            m_TooltipDurability = m_TooltipRoot.Q<Label>("TooltipDurability");
+
+            m_TooltipFlavorText = m_TooltipRoot.Q<Label>("TooltipFlavorText");
+            m_TooltipDivider1 = m_TooltipRoot.Q<VisualElement>("TooltipDivider1");
+            m_TooltipDivider2 = m_TooltipRoot.Q<VisualElement>("TooltipDivider2");
+
+            // 초기엔 숨김
+            m_TooltipRoot.style.display = DisplayStyle.None;
+        }
+        else
+        {
+            Debug.LogError("[MonsterController] MainLayout에서 'TooltipRoot'를 찾을 수 없습니다!");
+        }
+
+        // 초기 화면 갱신
         UpdateHealthUI();
         UpdateDoTUI();
+
         if (m_NameLabel != null)
         {
-            m_NameLabel.text = "Tutorial (Lv.1)"; // (임시 이름)
+            m_NameLabel.text = "Tutorial (Lv.1)"; // (임시)
         }
+
+        for (int i = 0; i < 7; i++)
+        {
+            UpdateCardSlotUI(i);
+        }
+
+        Debug.Log("MonsterController UI 초기화 완료");
     }
 
     // --- 6. 핵심 함수 ---
@@ -1053,6 +1093,7 @@ public class MonsterController
     {
         // 인덱스/데이터/UI 가져오기
         if (index < 0 || index >= 7) return;
+        if (Slots.Count <= index) return;
         Card cardData = m_Cards[index];
         VisualElement slotUI = Slots[index];
         if (slotUI == null) return;
@@ -1357,6 +1398,32 @@ public class MonsterController
         }
     }
 
+    public void MoveCard(int oldIndex, int newIndex)
+    {
+        if (oldIndex == newIndex) return;
+        if (oldIndex < 0 || oldIndex >= 7 || newIndex < 0 || newIndex >= 7) return;
+
+        // 1. 이동할 카드 백업
+        Card targetCard = m_Cards[oldIndex];
+        if (targetCard == null) return;
+
+        // 2. 리스트 조작 (System.Collections.Generic.List로 변환해서 처리하면 쉽습니다)
+        //    배열을 리스트로 변환 -> 제거 -> 삽입 -> 다시 배열로
+        List<Card> cardList = new List<Card>(m_Cards);
+
+        cardList.RemoveAt(oldIndex); // 뽑고
+        cardList.Insert(newIndex, targetCard); // 끼워넣기
+
+        // 3. 배열에 다시 적용
+        m_Cards = cardList.ToArray();
+
+        // 4. 모든 카드의 SlotIndex 정보 갱신 및 UI 업데이트
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] != null) m_Cards[i].SetSlotIndex(i);
+            UpdateCardSlotUI(i);
+        }
+    }
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------
 

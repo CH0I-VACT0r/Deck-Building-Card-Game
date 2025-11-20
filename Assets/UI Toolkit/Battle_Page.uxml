@@ -1,0 +1,87 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Combat%20Scene%20Styles.uss?fileID=7433441132597879392&amp;guid=a48c491a29f71064c8cb8761a7204072&amp;type=3#Combat Scene Styles" />
+    <ui:VisualElement name="BattlePageRoot" class="page-root" style="flex-grow: 1;">
+        <ui:VisualElement name="MonsterParty" class="MonsterPartyPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="MonSlot1" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot2" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot3" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot4" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot5" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot6" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="MonSlot7" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="MonsterStatus" class="StatusPanel MonsterStatusPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="MonsterPortrait" class="Portrait" style="flex-grow: 1;" />
+            <ui:VisualElement name="MonsterInfoBar" class="MonsterInfoBar" style="flex-grow: 1;">
+                <ui:VisualElement name="MonsterName" class="statusbar xp-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="MonsterName-label" class="xp-label bar-label" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Monster-HP-Bar" class="hp-bar statusbar" style="flex-grow: 1;">
+                    <ui:VisualElement name="Monster-HP-fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="Monster-HP-label" class="bar-label" />
+                    <ui:VisualElement name="Monster-Status-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="🩸0" name="MonsterBleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
+                        <ui:Label text="☠️ 0" name="MonsterPoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
+                        <ui:Label text="🔥 0" name="MonsterBurnStatus" class="poison-status status-effect-icon" style="display: none;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Monster-Buff-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="Label" name="MonsterHealStatus" class="status-effect-icon heal-status" style="display: none;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Monster_Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
+                    <ui:VisualElement name="Monster-Shield-fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="0" name="Monster-Shield-label" class="bar-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -9,36 +9,24 @@ public class BattleManager : MonoBehaviour
     public PlayerController playerController; //플레이어 진영을 관리하는 컨트롤러의 기본 형태 : 컨트롤러팩토리 에서 생성
     public MonsterController monsterController; // 몬스터 진영을 관리하는 컨트롤러의 '기본' 형태
     
-    // --- 2. UI 참조 ---
-    private VisualElement m_Root;
-
-    // --- 3. 전투 상태 ---
+    // --- 2. 전투 상태 ---
     private bool m_IsBattleEnded = false;
     public bool IsBattleEnded { get { return m_IsBattleEnded; } }
     public bool IsDeckEditingAllowed { get; set; } = false; // 덱 편집(D&D) 허용 상태
 
-    // --- 4. Unity 수명 주기 함수 ---
-    void OnEnable()
+    // --- 3. Unity 수명 주기 함수 ---
+    void Awake()
     {
-        // 1) UXML 루트 요소 찾기
-        m_Root = GetComponent<UIDocument>().rootVisualElement; 
+        Debug.Log("[BattleManager] 컨트롤러 객체 생성 중...");
+        playerController = ControllerFactory.CreatePlayerController(this);
+        monsterController = ControllerFactory.CreateMonsterController(this);
 
-        if (m_Root == null)
-        {
-            Debug.LogError("### UIDocument 컴포넌트나 Source Asset(UXML)이 없습니다! ###");
-            return;
-        }
-
-        // 2) Root 바로 전달
-        playerController = ControllerFactory.CreatePlayerController(this, m_Root);
-        monsterController = ControllerFactory.CreateMonsterController(this, m_Root);
-
-        // 3) 타겟 지정 (서로가 누굴 공격할지 알려줌)
+        // 타겟 지정
         playerController.SetTarget(monsterController);
         monsterController.SetTarget(playerController);
 
-        // 4) 덱 설정 (프로토타입: 컨트롤러가 스스로 자신의 덱을 설정하도록 함)
-        playerController.SetupDeck(null); // (나중에는 GameSessionData에서 덱 정보를 받아와 넘겨줄 수 있다)
+        // 덱 설정
+        playerController.SetupDeck(null);
         monsterController.SetupDeck(null);
     }
 
@@ -50,8 +38,8 @@ public class BattleManager : MonoBehaviour
 
         // dt time을 컨트롤러들에게 전달
         float dt = Time.deltaTime;
-        playerController.BattleUpdate(dt);
-        monsterController.BattleUpdate(dt);
+        if (playerController != null) playerController.BattleUpdate(dt);
+        if (monsterController != null) monsterController.BattleUpdate(dt);
     }
 
 
@@ -62,8 +50,8 @@ public class BattleManager : MonoBehaviour
         if (m_IsBattleEnded) return;
         m_IsBattleEnded = true;
 
-        playerController.CleanupBattleUI();
-        monsterController.CleanupBattleUI();
+        if (playerController != null) playerController.CleanupBattleUI();
+        if (monsterController != null) monsterController.CleanupBattleUI();
 
         if (winner == "Player")
         {

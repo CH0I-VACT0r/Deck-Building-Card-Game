@@ -19,13 +19,12 @@ public class Lord_SevereCold_Controller : PlayerController
     // --- 2. 생성자 ---
     /// '혹한의 성주' 컨트롤러가 생성될 때 호출
     /// <param name="manager">나를 관리할 BattleManager</param>
-    /// <param name="panel">내가 제어할 UXML의 'PlayerParty' 패널</param>
     /// <param name="maxHP">이 영주의 최대 체력</param>
 
     // ': base(manager, panel, maxHP)'
     //  받은 이 정보들을, PlayerController의 생성자에게 그대로 전달
-    public Lord_SevereCold_Controller(BattleManager manager, VisualElement panel, float maxHP)
-        : base(manager, panel, maxHP)
+    public Lord_SevereCold_Controller(BattleManager manager, float maxHP)
+        : base(manager, maxHP)
     {
         // (이곳은 '혹한의 성주'만의 초기화 코드를 위한 공간. 추후 로직 추가.)
         UnityEngine.Debug.Log("[Lord_SevereCold_Controller] 생성 완료. '격노' 시스템 활성화.");

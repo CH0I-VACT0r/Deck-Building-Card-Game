@@ -1,22 +1,18 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// Drag and Drop 처리용 핸들러 클래스
 public class DragAndDropHandler : PointerManipulator
 {
-    /// D&D 상태 변수
     private bool m_IsDragging = false;
-    private Vector2 m_StartMousePosition;
-    private Vector2 m_StartOffset;
-    private VisualElement m_Root;
-    public int StartSlotIndex { get; private set; } = -1;
+    private VisualElement m_Root; // 전체 화면 루트 (고스트를 띄울 공간)
+    private VisualElement m_GhostIcon; // 마우스 따라다닐 가짜 아이콘
 
-    // [수정!] object로 통일 (CS0656 에러 방지)
+    public int StartSlotIndex { get; private set; } = -1;
     private object m_OwnerController;
 
-    private Card m_PickedUpCard;
+    // 드래그 시작 시점의 오프셋 (마우스가 카드의 어디를 잡았는지)
+    private Vector2 m_PointerOffset;
 
-    // --- 1. 생성자 ---
     public DragAndDropHandler(VisualElement target, VisualElement root, object controller)
     {
         this.target = target;
@@ -43,41 +39,27 @@ public class DragAndDropHandler : PointerManipulator
     {
         if (m_OwnerController is PlayerController playerOwner)
         {
-           
+            // 1. 잠금 확인
             if (!playerOwner.GetBattleManager().IsDeckEditingAllowed) return;
-            if (m_IsDragging || evt.button != 0) return;
+            if (m_IsDragging || m_Root == null) return;
 
-            // 툴팁 취소 및 카드 정보/인덱스 저장
-            playerOwner.ClearTooltipScheduler();
+            // 2. 데이터 확인
             StartSlotIndex = playerOwner.GetSlotIndexFromTarget(target);
-            m_PickedUpCard = playerOwner.GetCardAtIndex(StartSlotIndex);
-            if (m_PickedUpCard == null) return;
+            Card card = playerOwner.GetCardAtIndex(StartSlotIndex);
+            if (card == null) return;
 
-            // 배열에서 제거 및 왼쪽으로 시프트
-            playerOwner.RemoveCard(StartSlotIndex);
-
-            // 드래그 상태 및 위치 저장
+            // 3. 드래그 시작
             m_IsDragging = true;
-            m_StartMousePosition = evt.position;
-
-            // 현재 transform offset을 Vector2로 저장
-            StyleTranslate translateStyle = target.style.translate;
-            Translate currentTranslate = translateStyle.value;
-
-            m_StartOffset = new Vector2(currentTranslate.x.value,
-                                        currentTranslate.y.value);
-
-            // 시각적 변경 및 마우스 캡처
-            target.BringToFront();
-            target.style.position = new StyleEnum<Position>(Position.Absolute);
             target.CapturePointer(evt.pointerId);
+            playerOwner.ClearTooltipScheduler();
+
+            // 4. [핵심] 고스트 아이콘 생성 (Root에 붙임)
+            CreateGhostIcon(card, evt.position);
+
+            // 5. 원본 슬롯은 흐릿하게 처리 (데이터는 아직 그대로 있음!)
+            target.style.opacity = 0.3f;
 
             evt.StopPropagation();
-        }
-        else if (m_OwnerController is MonsterController monsterOwner)
-        {
-            if (!monsterOwner.GetBattleManager().IsDeckEditingAllowed) return;
-            // (몬스터 카드는 드래그하지 않으므로, 여기서 그냥 return 할 수도 있다.)
         }
     }
 
@@ -85,22 +67,18 @@ public class DragAndDropHandler : PointerManipulator
     {
         if (!m_IsDragging || !target.HasPointerCapture(evt.pointerId)) return;
 
-        // 마우스가 움직인 만큼만 타겟을 이동
-        Vector2 mousePos = evt.position;
-        Vector2 startPos = m_StartMousePosition;
+        // 6. 고스트 아이콘 이동
+        if (m_GhostIcon != null)
+        {
+            // 마우스 위치(World)를 Root 기준 로컬 좌표로 변환
+            Vector2 mousePos = evt.position; // 명시적 Vector2
+            Vector2 localPos = m_Root.WorldToLocal(mousePos);
 
-        Vector2 delta = mousePos - startPos;
-
-
-        // 시작 오프셋에 델타를 더하여 최종 위치를 결정
-        target.style.translate = new StyleTranslate(new Translate(
-            delta.x + m_StartOffset.x,
-            delta.y + m_StartOffset.y
-        ));
-
-        evt.StopPropagation();
+            // 오프셋 적용하여 위치 설정
+            m_GhostIcon.style.left = localPos.x - m_PointerOffset.x;
+            m_GhostIcon.style.top = localPos.y - m_PointerOffset.y;
+        }
     }
-
 
     private void PointerUpHandler(PointerUpEvent evt)
     {
@@ -109,31 +87,81 @@ public class DragAndDropHandler : PointerManipulator
         m_IsDragging = false;
         target.ReleasePointer(evt.pointerId);
 
+        // 7. 드롭 위치 계산
         if (m_OwnerController is PlayerController playerOwner)
         {
-            // 마우스를 놓은 위치의 VisualElement 인덱스 확인
-            VisualElement dropElement = evt.target as VisualElement;
-            int dropIndex = playerOwner.GetSlotIndexFromTarget(dropElement);
+            // 마우스 아래에 있는 요소 찾기
+            Vector2 mousePos = evt.position;
+            VisualElement dropTarget = m_Root.panel.Pick(mousePos);
 
-            // 드롭 인덱스 결정
-            if (dropIndex == -1 || dropIndex == StartSlotIndex) // 원래 자리 복귀 또는 유효하지 않음
+            // 그 요소가 속한 슬롯 찾기 (부모 타고 올라가며 검색)
+            int dropIndex = -1;
+            VisualElement current = dropTarget;
+
+            // (루프 안전장치 추가: 10번까지만 상위 검색)
+            int depth = 0;
+            while (current != null && depth < 10)
             {
-                dropIndex = StartSlotIndex;
+                dropIndex = playerOwner.GetSlotIndexFromTarget(current);
+                if (dropIndex != -1) break;
+                current = current.parent;
+                depth++;
             }
 
-            // 배열에 삽입 및 시각적 복구
-            playerOwner.InsertCard(dropIndex, m_PickedUpCard);
-            m_PickedUpCard = null;
-        }
-        // (몬스터 컨트롤러는 드롭 로직 없음)
+            // 8. [핵심] 데이터 이동 (MoveCard)
+            if (dropIndex != -1 && dropIndex != StartSlotIndex)
+            {
+                Debug.Log($"[D&D] {StartSlotIndex} -> {dropIndex} 이동");
+                playerOwner.MoveCard(StartSlotIndex, dropIndex);
+            }
+            else
+            {
+                Debug.Log("[D&D] 원래 위치로 복귀");
+            }
 
-        SnapBackToOrigin();
+            // 9. 뒷정리
+            target.style.opacity = 1f; // 원본 불투명도 복구
+
+            if (m_GhostIcon != null)
+            {
+                if (m_Root.Contains(m_GhostIcon))
+                {
+                    m_Root.Remove(m_GhostIcon);
+                }
+                m_GhostIcon = null;
+            }
+        }
+
         evt.StopPropagation();
     }
 
-    private void SnapBackToOrigin()
+    // [헬퍼] 고스트 아이콘 생성 함수
+    private void CreateGhostIcon(Card card, Vector2 mousePosition)
     {
-        target.style.position = new StyleEnum<Position>(Position.Relative);
-        target.style.translate = new StyleTranslate(new Translate(0, 0));
+        m_GhostIcon = new VisualElement();
+
+        // 스타일 복사 (카드 이미지처럼 보이게)
+        if (card.CardImage != null)
+        {
+            m_GhostIcon.style.backgroundImage = new StyleBackground(card.CardImage);
+        }
+
+        // 크기 설정 (원본 슬롯 크기 따라감)
+        m_GhostIcon.style.width = target.resolvedStyle.width;
+        m_GhostIcon.style.height = target.resolvedStyle.height;
+        m_GhostIcon.style.position = Position.Absolute;
+
+        // 마우스 커서가 카드의 중앙에 오도록 오프셋 설정
+        m_PointerOffset = new Vector2(target.resolvedStyle.width / 2, target.resolvedStyle.height / 2);
+
+        // 초기 위치 설정
+        Vector2 localPos = m_Root.WorldToLocal(mousePosition);
+        m_GhostIcon.style.left = localPos.x - m_PointerOffset.x;
+        m_GhostIcon.style.top = localPos.y - m_PointerOffset.y;
+
+        // 터치 무시 (드롭 시 밑에 있는 슬롯을 감지해야 하므로 필수!)
+        m_GhostIcon.pickingMode = PickingMode.Ignore;
+
+        m_Root.Add(m_GhostIcon);
     }
 }

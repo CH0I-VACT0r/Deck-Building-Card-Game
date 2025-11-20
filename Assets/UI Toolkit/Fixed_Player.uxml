@@ -1,0 +1,99 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Combat%20Scene%20Styles.uss?fileID=7433441132597879392&amp;guid=a48c491a29f71064c8cb8761a7204072&amp;type=3#Combat Scene Styles" />
+    <ui:VisualElement name="PlayerPageRoot" class="page-root" style="flex-grow: 1;">
+        <ui:VisualElement name="PlayerParty" class="PlayerPartyPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="CardSlot1" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none; translate: 0% 0 1px;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot2" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot3" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot4" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot5" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none; transform-origin: center center 0;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot6" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CardSlot7" class="CardSlot" style="flex-grow: 1;">
+                <ui:VisualElement name="CardImage" class="card-image-background" style="flex-grow: 1;" />
+                <ui:VisualElement name="CooldownOverlay" class="card-cooldown-overlay" style="flex-grow: 1; display: none;" />
+                <ui:VisualElement name="RoleUIContatiner" picking-mode="Ignore" class="card-role-ui-container" style="flex-grow: 1;" />
+                <ui:VisualElement name="CostContainer" class="cost-container" style="flex-grow: 1; display: none;">
+                    <ui:Label text="0" name="CostLabel" class="cost-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="PlayerStatus" class="PlayerStatusPanel StatusPanel" style="flex-grow: 1;">
+            <ui:VisualElement name="Portrait" class="Portrait" style="flex-grow: 1;" />
+            <ui:VisualElement name="StatusBar" class="LordInfoBar" style="flex-grow: 1;">
+                <ui:VisualElement name="XP-Bar" class="statusbar xp-bar" style="flex-grow: 1;">
+                    <ui:Label text="Label" name="LV-label" class="bar-label xp-label" />
+                    <ui:VisualElement name="XP-Ticks-Container" class="xp-ticks-container" style="flex-grow: 1;">
+                        <ui:VisualElement name="XPTick0" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick1" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick2" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick3" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick4" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick5" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick6" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick7" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick8" class="xp-tick" style="flex-grow: 1;" />
+                        <ui:VisualElement name="XPTick9" class="xp-tick" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="HP-Bar" class="statusbar hp-bar" style="flex-grow: 1;">
+                    <ui:VisualElement name="HP-Bar-Fill" class="statusbar-fill hp-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="HP-label" class="bar-label" />
+                    <ui:VisualElement name="Status-Effect-Container" class="status-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="🩸7" name="BleedStatus" class="status-effect-icon bleed-status" style="display: none;" />
+                        <ui:Label text="☠️ 7" name="PoisonStatus" class="status-effect-icon poison-status" style="display: none;" />
+                        <ui:Label text="🔥 5" name="BurnStatus" class="status-effect-icon burn-status" style="display: none;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Buff-Effect-Container" class="buff-effect-container" style="flex-grow: 1;">
+                        <ui:Label text="💚 0" name="HealStatus" class="status-effect-icon heal-status" style="display: none;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Shield-Bar" class="statusbar shield-bar" style="flex-grow: 1;">
+                    <ui:VisualElement name="Shield-Bar_Fill" class="statusbar-fill shield-bar-fill" style="flex-grow: 1;" />
+                    <ui:Label text="Label" name="Shield-label" class="bar-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

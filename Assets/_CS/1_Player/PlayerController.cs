@@ -8,8 +8,8 @@ using System.Collections.Generic; // List 사용
 public class PlayerController
 {
     // --- 1. 참조 변수 ---
-    protected BattleManager m_BattleManager; // 전투의 규칙을 관리
-    protected MonsterController m_Target; // 공격해야 할 타겟 (몬스터 컨트롤러)
+    protected BattleManager m_BattleManager; // 전투 규칙 관리
+    protected MonsterController m_Target; // 공격 타겟 : 몬스터 컨트롤러
 
     // --- 2. UI 요소 ---
     protected VisualElement m_LordPortrait; // 초상화 패널
@@ -18,6 +18,7 @@ public class PlayerController
     public List<VisualElement> Slots { get; protected set; } = new List<VisualElement>(7); // 7개의 카드 슬롯 UI 요소 리스트
 
     // 툴팁 UI 요소
+    protected VisualElement m_Root;
     private VisualElement m_TooltipRoot;
     private Label m_TooltipName;
     private VisualElement m_TooltipTagContainer;
@@ -39,7 +40,7 @@ public class PlayerController
 
     // 툴팁 스케줄러 변수
     private IVisualElementScheduledItem m_TooltipScheduler;
-    private const long TOOLTIP_DELAY_MS = 300; // 0.4초
+    private const long TOOLTIP_DELAY_MS = 300; // 0.3초
 
     // 상태 패널 요소
     private VisualElement m_HealthBarFill;
@@ -63,13 +64,13 @@ public class PlayerController
     private List<Label> m_CostLabels = new List<Label>(7);
 
     // --- 3. 핵심 상태 (공통) ---
-    public float CurrentHP { get; protected set; } /// 영주의 현재 체력
-    public float MaxHP { get; protected set; } /// 영주의 현재 체력
-    public float CurrentShield { get; protected set; } /// 영주의 현재 쉴드
+    public float CurrentHP { get; protected set; }  // 영주의 현재 체력
+    public float MaxHP { get; protected set; } // 영주의 현재 체력
+    public float CurrentShield { get; protected set; } // 영주의 현재 쉴드
     
-    public int CurrentLevel { get; protected set; } = 1; /// 현재 레벨
-    public int CurrentXP { get; protected set; } = 0; /// 현재 경험치 
-    public int MaxXP { get; protected set; } = 10; /// 최대 경험치
+    public int CurrentLevel { get; protected set; } = 1; // 현재 레벨
+    public int CurrentXP { get; protected set; } = 0; // 현재 경험치 
+    public int MaxXP { get; protected set; } = 10; // 최대 경험치
 
     // DoT 중첩 변수
     public int BleedStacks { get; protected set; } = 0;
@@ -100,21 +101,111 @@ public class PlayerController
 
     // --- 5. 생성자 ---
     /// PlayerController가 처음 생성될 때 호출
-    public PlayerController(BattleManager manager, VisualElement VisualElement, float maxHP)
+    public PlayerController(BattleManager manager, float maxHP)
     {
         this.m_BattleManager = manager;
         this.MaxHP = maxHP;
         this.CurrentHP = maxHP;
         this.CurrentShield = 0;
 
-        this.m_PlayerParty = VisualElement.Q<VisualElement>("PlayerParty");
-        this.m_StatusPanel = VisualElement.Q<VisualElement>("PlayerStatus");
+        // 2.리스트 초기화(Null 방지)
+        Slots = new List<VisualElement>();
+        m_RoleUIContainers = new List<VisualElement>();
+        m_CooldownOverlays = new List<VisualElement>();
+        m_CardImageLayers = new List<VisualElement>();
+        m_CostContainers = new List<VisualElement>();
+        m_CostLabels = new List<Label>();
+        m_XPTicks = new List<VisualElement>();
+    }
 
-        // TooltipRoot와 그 자식들 쿼리
-        m_TooltipRoot = VisualElement.Q<VisualElement>("TooltipRoot");
+    // --- 6. 핵심 함수 ---
+    public void InitializeUI(VisualElement playerUiRoot, VisualElement mainRoot)
+    {
+       m_Root = playerUiRoot; // Fixed_Player.uxml의 루트
+
+        // 플레이어 상태 패널 연결 
+        m_StatusPanel = playerUiRoot.Q<VisualElement>("PlayerStatus"); 
+        
+        if (m_StatusPanel != null)
+        {
+            m_LordPortrait = m_StatusPanel.Q<VisualElement>("Portrait");
+            m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill");
+            m_HealthLabel = m_StatusPanel.Q<Label>("HP-label");
+            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill");
+            m_ShieldLabel = m_StatusPanel.Q<Label>("Shield-label");
+            m_LevelLabel = m_StatusPanel.Q<Label>("LV-label");
+
+            // XP Ticks
+            m_XPTicks.Clear();
+            for (int i = 0; i < 10; i++)
+            {
+                m_XPTicks.Add(m_StatusPanel.Q<VisualElement>("XPTick" + i));
+            }
+
+            // DoT Status Labels
+            m_BleedStatusLabel = m_StatusPanel.Q<Label>("BleedStatus");
+            m_PoisonStatusLabel = m_StatusPanel.Q<Label>("PoisonStatus");
+            m_BurnStatusLabel = m_StatusPanel.Q<Label>("BurnStatus");
+            m_HealStatusLabel = m_StatusPanel.Q<Label>("HealStatus");
+        }
+        else
+        {
+            // (디버깅용)
+            Debug.LogWarning("[PlayerController] 'PlayerStatus'를 찾지 못했습니다. UI 구성을 확인하세요.");
+        }
+
+        // 2. 카드 슬롯 연결 및 D&D / 툴팁 이벤트 등록 (Fixed_Player.uxml)
+        Slots.Clear();
+        m_CardImageLayers.Clear();
+        m_RoleUIContainers.Clear();
+        m_CooldownOverlays.Clear();
+        m_CostContainers.Clear();
+        m_CostLabels.Clear();
+
+        m_PlayerParty = playerUiRoot.Q<VisualElement>("PlayerPartyContainer"); 
+
+        for (int i = 0; i < 7; i++)
+        {
+            // 이름 규칙: CardSlot1
+            VisualElement slot = playerUiRoot.Q<VisualElement>($"CardSlot{i + 1}");
+            Slots.Add(slot);
+
+            if (slot != null)
+            {
+                // 슬롯 내부 요소 연결
+                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage"));
+                m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
+                m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
+                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
+                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
+
+                // D&D 핸들러 부착
+                DragAndDropHandler manipulator = new DragAndDropHandler(slot, mainRoot, this);
+                slot.AddManipulator(manipulator);
+
+                int currentIndex = i;
+                slot.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterSlot(currentIndex, evt));
+                slot.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveSlot());
+            }
+            else
+            {
+
+                Debug.LogError($"[PlayerController] 'CardSlot_{i}'를 찾을 수 없습니다!");
+                m_CardImageLayers.Add(null);
+                m_RoleUIContainers.Add(null);
+                m_CooldownOverlays.Add(null);
+                m_CostContainers.Add(null);
+                m_CostLabels.Add(null);
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 3. 툴팁 UI 요소 연결 (MainLayout.uxml 내부)
+        // ---------------------------------------------------------
+        m_TooltipRoot = mainRoot.Q<VisualElement>("TooltipRoot"); // MainLayout에 추가한 이름
+
         if (m_TooltipRoot != null)
         {
-            // UXML의 Name 확인
             m_TooltipName = m_TooltipRoot.Q<Label>("TooltipName");
             m_TooltipTagContainer = m_TooltipRoot.Q<VisualElement>("TooltipTagContainer");
             m_TooltipSkillDesc = m_TooltipRoot.Q<Label>("TooltipSkillDesc");
@@ -131,83 +222,31 @@ public class PlayerController
             m_TooltipFlavorText = m_TooltipRoot.Q<Label>("TooltipFlavorText");
             m_TooltipDivider1 = m_TooltipRoot.Q<VisualElement>("TooltipDivider1");
             m_TooltipDivider2 = m_TooltipRoot.Q<VisualElement>("TooltipDivider2");
+
+            // 초기엔 숨기기
             m_TooltipRoot.style.display = DisplayStyle.None;
         }
         else
         {
-            Debug.LogError("[PlayerController] 'TooltipRoot'를 UXML에서 찾을 수 없습니다!");
+            Debug.LogError("[PlayerController] MainLayout에서 'TooltipRoot'를 찾을 수 없습니다!");
         }
 
-        // 2. 카드 슬롯(CardSlot1 ~ CardSlot7) 찾기
-        Slots.Clear();
-        m_RoleUIContainers.Clear();
-        m_CooldownOverlays.Clear();
-        m_CardImageLayers.Clear();
-        m_CostContainers.Clear();
-        m_CostLabels.Clear();
-        for (int i = 0; i < 7; i++)
-        {
-            // UXML에 정의된 이름 (UXML 이름 확인!)
-            VisualElement slot = m_PlayerParty.Q<VisualElement>("CardSlot" + (i + 1));
-            Slots.Add(slot);
-
-            if (slot != null)
-            {
-                m_CardImageLayers.Add(slot.Q<VisualElement>("CardImage")); 
-                m_RoleUIContainers.Add(slot.Q<VisualElement>("RoleUIContatiner"));
-                m_CooldownOverlays.Add(slot.Q<VisualElement>("CooldownOverlay"));
-                m_CostContainers.Add(slot.Q<VisualElement>("CostContainer"));
-                m_CostLabels.Add(slot.Q<Label>("CostLabel"));
-
-                // 마우스 이벤트 등록
-                int currentIndex = i;
-                slot.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterSlot(currentIndex, evt));
-                slot.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveSlot());
-            }
-            else
-            {
-                Debug.LogError($"[PlayerController] 'CardSlot{i + 1}'을 UXML에서 찾을 수 없습니다!");
-                m_RoleUIContainers.Add(null);
-                m_CooldownOverlays.Add(null);
-                m_CostContainers.Add(null);
-                m_CostLabels.Add(null);
-            }
-        }
-
-        // 상태 UI
-        if (m_StatusPanel != null)
-        {
-            m_LordPortrait = m_StatusPanel.Q<VisualElement>("Portrait");
-            m_HealthBarFill = m_StatusPanel.Q<VisualElement>("HP-Bar-Fill");
-            m_HealthLabel = m_StatusPanel.Q<Label>("HP-label");
-            m_ShieldBarFill = m_StatusPanel.Q<VisualElement>("Shield-Bar_Fill");
-            m_ShieldLabel = m_StatusPanel.Q<Label>("Shield-label");
-            m_LevelLabel = m_StatusPanel.Q<Label>("LV-label");
-
-            m_XPTicks.Clear();
-            for (int i = 0; i < 10; i++)
-            {
-                m_XPTicks.Add(m_StatusPanel.Q<VisualElement>("XPTick" + i));
-            }
-
-            //DoT 아이콘
-            m_BleedStatusLabel = m_StatusPanel.Q<Label>("BleedStatus");
-            m_PoisonStatusLabel = m_StatusPanel.Q<Label>("PoisonStatus");
-            m_BurnStatusLabel = m_StatusPanel.Q<Label>("BurnStatus");
-            m_HealStatusLabel = m_StatusPanel.Q<Label>("HealStatus");
-        }
-        else
-        {
-            Debug.LogError("[PlayerController] 'PlayerStatusPanel'을 UXML에서 찾을 수 없습니다!");
-        }
-
-        // UI 업데이트
+        // ---------------------------------------------------------
+        // 4. 초기 화면 갱신 (데이터 반영)
+        // ---------------------------------------------------------
         UpdateHealthUI();
         UpdateXPUI();
         UpdateDoTUI();
-    }
+        
+        for (int i = 0; i < 7; i++)
+        {
+            UpdateCardSlotUI(i);
+        }
 
-    // --- 6. 핵심 함수 ---
+        Debug.Log("PlayerController UI 초기화 및 연결 완료");
+    }
+ 
+
     public virtual void BattleUpdate(float deltaTime)
     {
         // 내 카드들의 쿨타임 회전 및 스킬 발동
@@ -1120,7 +1159,7 @@ public class PlayerController
     {
         // 인덱스 유효 여부 확인
         if (index < 0 || index >= 7) return;
-
+        if (Slots.Count <= index) return;
         // C# 데이터 & UI 슬롯 호출
         Card cardData = m_Cards[index];
         VisualElement slotUI = Slots[index];
@@ -1424,6 +1463,33 @@ public class PlayerController
         // UI 갱신
         for (int i = index; i < m_Cards.Length; i++)
         {
+            UpdateCardSlotUI(i);
+        }
+    }
+
+    public void MoveCard(int oldIndex, int newIndex)
+    {
+        if (oldIndex == newIndex) return;
+        if (oldIndex < 0 || oldIndex >= 7 || newIndex < 0 || newIndex >= 7) return;
+
+        // 1. 이동할 카드 백업
+        Card targetCard = m_Cards[oldIndex];
+        if (targetCard == null) return;
+
+        // 2. 리스트 조작 (System.Collections.Generic.List로 변환해서 처리하면 쉽습니다)
+        //    배열을 리스트로 변환 -> 제거 -> 삽입 -> 다시 배열로
+        List<Card> cardList = new List<Card>(m_Cards);
+
+        cardList.RemoveAt(oldIndex); // 뽑고
+        cardList.Insert(newIndex, targetCard); // 끼워넣기
+
+        // 3. 배열에 다시 적용
+        m_Cards = cardList.ToArray();
+
+        // 4. 모든 카드의 SlotIndex 정보 갱신 및 UI 업데이트
+        for (int i = 0; i < 7; i++)
+        {
+            if (m_Cards[i] != null) m_Cards[i].SetSlotIndex(i);
             UpdateCardSlotUI(i);
         }
     }
