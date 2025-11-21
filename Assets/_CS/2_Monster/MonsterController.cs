@@ -1257,10 +1257,10 @@ public class MonsterController
                 m_Cards[i].ClearBattleStatBuffs(); // 스탯 초기화
                 m_Cards[i].ClearBattleFrozen(); // 빙결 초기화
                 m_Cards[i].CurrentCooldown = 0f; // 쿨타임 초기화
+                m_Cards[i].SetSlotIndex(i);
                 UpdateCardSlotUI(i); // UI 갱신
             }
         }
-        RevertShuffle();
     }
 
     // --- 11. 카드 파괴 함수 ---
@@ -1398,27 +1398,39 @@ public class MonsterController
         if (oldIndex == newIndex) return;
         if (oldIndex < 0 || oldIndex >= 7 || newIndex < 0 || newIndex >= 7) return;
 
-        // 1. 이동할 카드 백업
         Card targetCard = m_Cards[oldIndex];
         if (targetCard == null) return;
 
-        // 2. 리스트 조작 (System.Collections.Generic.List로 변환해서 처리하면 쉽습니다)
-        //    배열을 리스트로 변환 -> 제거 -> 삽입 -> 다시 배열로
-        List<Card> cardList = new List<Card>(m_Cards);
+        // 목적지가 비어있는지 확인
+        if (m_Cards[newIndex] == null)
+        {
+            // 빈 자리로 이동 
+            m_Cards[newIndex] = targetCard;
+            m_Cards[oldIndex] = null;
 
-        cardList.RemoveAt(oldIndex); // 뽑고
-        cardList.Insert(newIndex, targetCard); // 끼워넣기
+            Debug.Log($"[이동] {oldIndex} -> {newIndex} (단순 이동)");
+        }
+        else
+        {
+            // 이미 카드가 있는 자리로 이동 
+            List<Card> cardList = new List<Card>(m_Cards);
 
-        // 3. 배열에 다시 적용
-        m_Cards = cardList.ToArray();
+            cardList.RemoveAt(oldIndex); // 원래 자리에서 빼고 (뒤쪽이 당겨짐)
+            cardList.Insert(newIndex, targetCard); // 새 자리에 끼워넣음 (뒤쪽이 밀림)
 
-        // 4. 모든 카드의 SlotIndex 정보 갱신 및 UI 업데이트
+            m_Cards = cardList.ToArray();
+
+            Debug.Log($"[이동] {oldIndex} -> {newIndex} (끼어들기)");
+        }
+
+        // 3. 데이터 및 UI 갱신
         for (int i = 0; i < 7; i++)
         {
             if (m_Cards[i] != null) m_Cards[i].SetSlotIndex(i);
             UpdateCardSlotUI(i);
         }
     }
+
     // -------------------------- 프로토타입용 덱 설정 함수 ---------------------------------
     // --------------------------------------------------------------------------------------
 
